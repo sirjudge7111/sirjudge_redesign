@@ -24,11 +24,19 @@ header, .sec02, footer{
 
 .sec01{
    margin: 80px 0 ; 
+
+   h1{
+    margin-bottom: 24px;
+   }
 }
 
 header .logo{
 width:320px;
 height:auto;}
+
+header p{
+    font-weight: 800;
+}
 
 p,h1,h2{
     text-align: center;
@@ -51,39 +59,45 @@ a:hover{
     align-items: center;   
  }
 
- .sec02 p{
+.sec02{
+    h1{
+            margin-bottom: 24px;
+    }
 
-    margin-top: 24px;
+    .txt-area{
+        border: 1px #E5E7EB solid;
+        filter: drop-shadow(0px 2px 8px rgba(0, 0, 0, 0.2));
+        border-radius: 10px;
+        padding: 64px 16px;
+        font-weight: 600;
 
- }
- .sec02 p:first-of-type{
-
-    margin-top: 64px;
-
+        p:last-of-type{
+            margin-top: 24px;
+        }
+    }
 }
+
 
 .card-list{
     display: grid;
     grid-template-columns:1fr;
     place-content: center;
-    margin-top: 24px;
     gap:24px;
 }
 
 /* 親要素↓ */
-.card-botan{
+/* .card-botan{
     position: relative;
     display: flex;
     justify-content: center;
     align-items: center; 
     gap: 32px;
-}
+} */
 
 /* 子要素↓ */
 /* afterを付けたらcontentはセットになる */
-.card-botan::after{
+/* .card-botan::after{
     content: '';
-    /* absoluteを使うなら親要素にrelativeを必ず置く */
     position: absolute;
     top: 50%;
     left: 50%;
@@ -94,20 +108,71 @@ a:hover{
     z-index: -1;
     border: #000 1px solid;
     border-radius: 999px;
-}
+} */
 
-.card-img{
+/* .card-img{
     width: clamp(72px, 25%, 160px);
     height: auto;
+} */
+
+.card-botan{
+    display: grid;
+    padding: 0 42px;
+    place-content: center;
+    height: max-content;
+    grid-template-columns: auto 1fr;
+    gap: 16px;
+    position: relative;
+
+    .txt{
+        background-color: #fff;
+        border: 1px #E5E7EB solid;
+        height: 145px;
+        border-radius: 10px;
+        padding: 24px 16px;
+        text-align: left;
+        /* box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.8); */
+        filter: drop-shadow(0px 2px 8px rgba(0, 0, 0, 0.2));
+        font-size: 20px;
+        font-weight: 800;
+    }
+
+    .txt::after{
+        content: '→';
+        color: #fff;
+        position: absolute;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        bottom: -2%;
+        right: -2%;
+        width: 45px;
+        height: 45px;
+        border-radius: 999px;
+        background: linear-gradient(to bottom right, #F8E184, #7EB4FF, #FF3F3F);
+    }
+
+    .card-img{
+        width: 100px;
+    }
 }
 
-.txt{
-   font-weight: 600; 
+.soon{
+    .card-img{
+        display: flex;
+        align-self: end;
+    }
+
+    .txt{
+        background: #B8B8B8;
+    }
+
+    .txt::after{
+        display: none;
+    }
 }
-.soon::after{
-    content: "";
-    background-color: #b8b8b8;
-}
+
+
 
 .quiz-poke{
     .background{
@@ -129,9 +194,6 @@ a:hover{
     .card-img{
     width: clamp(72px, 55%, 160px);
     height: auto;
-}
-.txt{
-    width: 10em;
 }
 .potipoti{
   background-color:#fff;
