@@ -1,0 +1,166 @@
+/* 始まりは.←こいつから */
+.background{
+    background-color: #FFF598;
+    margin:0 32px;
+    width:calc(100% - 64px);
+    height:100%;
+    /* 要素の固定↓（要素は今回はbackgroundになる）*/
+    position: fixed;
+    z-index: -1;
+    top: 0;
+    left: 0;
+    border: #000 1px solid;
+}
+
+
+/* カンマを入力すると複数の要素に適用できる↓ */
+header, .sec02, footer{
+     display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin: 80px 20px ;
+} 
+
+.sec01{
+   margin: 80px 0 ; 
+}
+
+header .logo{
+width:320px;
+height:auto;}
+
+p,h1,h2{
+    text-align: center;
+}
+
+a{
+   color: #000; 
+   text-decoration: none;
+   transition: all .3s;
+}
+
+a:hover{
+    opacity: 0.7;
+    transition: all .3s;
+}
+
+.mark{
+    display: flex;
+    justify-content: center;
+    align-items: center;   
+ }
+
+ .sec02 p{
+
+    margin-top: 24px;
+
+ }
+ .sec02 p:first-of-type{
+
+    margin-top: 64px;
+
+}
+
+.card-list{
+    display: grid;
+    grid-template-columns:1fr;
+    place-content: center;
+    margin-top: 24px;
+    gap:24px;
+}
+
+/* 親要素↓ */
+.card-botan{
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center; 
+    gap: 32px;
+}
+
+/* 子要素↓ */
+/* afterを付けたらcontentはセットになる */
+.card-botan::after{
+    content: '';
+    /* absoluteを使うなら親要素にrelativeを必ず置く */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color:#fff;
+    width: min(680px, calc(100% - 32px));
+    height: clamp(80px, 10vw, 140px);
+    z-index: -1;
+    border: #000 1px solid;
+    border-radius: 999px;
+}
+
+.card-img{
+    width: clamp(72px, 25%, 160px);
+    height: auto;
+}
+
+.txt{
+   font-weight: 600; 
+}
+.soon::after{
+    content: "";
+    background-color: #b8b8b8;
+}
+
+.quiz-poke{
+    .background{
+        background-color: #ffc6bf;
+        margin:0 0px;
+        width:100vw;
+        height:100vh;
+        z-index: -1;
+        border: #000 0px solid;    
+    }
+    .card-botan::after{
+        width: 100vw;
+         border-radius: 0px;
+         border: #000 0px solid;
+         border-top: #000 1px solid;
+         border-bottom: #000 1px solid;
+
+    }
+    .card-img{
+    width: clamp(72px, 55%, 160px);
+    height: auto;
+}
+.txt{
+    width: 10em;
+}
+.potipoti{
+  background-color:#fff;
+  border: #000 1px solid; 
+  border-radius: 999px;
+  width: 12em; 
+  height: auto;
+  padding:1em 1.5em ;
+}
+.sentaku{
+  display: flex;
+    justify-content: center;
+    align-items: center; 
+    gap: 64px;
+    flex-direction: column; 
+    .potipoti{
+        font-size: 24px;
+        font-weight: 600;
+    }
+}
+.sentaku2{
+    display: flex;
+    justify-content: center;
+    align-items: center; 
+    gap: 48px;
+    margin-top: 64px;
+    .potipoti{
+        font-size: 14px;
+        font-weight: 600;
+    }
+}
+}

@@ -1,0 +1,483 @@
+<!-- quiz.html -->
+
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ポケカ問題クイズ</title>
+  <style>
+    :root { --pink:#f9c9c9; --card:#fff; --ink:#222; --muted:#6b7280; --good:#10b981; --bad:#ef4444; }
+    * { box-sizing: border-box; }
+    html,body{ height:100%; width:100%; overflow-x:hidden; }
+    body { margin:0; color:var(--ink); background:var(--pink); font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; }
+    .stage { min-height:100%; display:grid; grid-template-rows:auto 1fr auto; max-width:560px; width:100%; margin:0 auto; padding:16px clamp(12px,3vw,20px); gap:16px; }
+
+    .hdr { text-align:center; }
+    .title { font-weight:800; letter-spacing:.03em; font-size:20px; }
+    .progress { font-size:12px; color:var(--muted); margin-top:4px; }
+    .modes { display:flex; gap:8px; justify-content:center; margin-top:8px; flex-wrap:wrap; }
+    .mode-pill { display:inline-block; padding:6px 10px; border:1px solid #e5e7eb; border-radius:9999px; background:#fff; font-size:12px; text-decoration:none; color:#111; }
+    .mode-pill.is-active { background:#111827; color:#fff; border-color:#111827; }
+
+    .qcard { background:var(--card); border:1px solid #e5e7eb; border-radius:16px; box-shadow:0 6px 18px rgba(0,0,0,.08); padding:16px; display:grid; gap:12px; min-width:0; }
+    .qmeta { font-size:12px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap; }
+    .qno { font-weight:700; background:#fde68a; border-radius:999px; padding:2px 10px; color:#7c2d12; }
+    .qtext { font-size:16px; line-height:1.8; font-weight:600; word-break:break-word; overflow-wrap:anywhere; }
+    .links { display:grid; gap:6px; margin-top:4px; }
+    .links a { color:#2563eb; text-decoration: underline; }
+
+    .actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+    .btn { appearance:none; border:none; cursor:pointer; user-select:none; padding:14px 18px; border-radius:9999px; min-width:120px; font-weight:700; font-size:16px; color:#111; background:#fff; border:1px solid #e5e7eb; box-shadow:0 2px 0 rgba(0,0,0,.12) inset,0 2px 8px rgba(0,0,0,.08); }
+    .btn:active { transform: translateY(1px) scale(.995); }
+    .btn.good { background:#ecfdf5; border-color:#a7f3d0; color:#065f46; }
+    .btn.bad  { background:#fef2f2; border-color:#fecaca; color:#7f1d1d; }
+    .btn.secondary { background:#f3f4f6; }
+
+    .result { text-align:center; font-weight:800; font-size:18px; padding:8px 12px; border-radius:12px; display:none; }
+    .result.ok { color:#065f46; background:#ecfdf5; border:1px solid #a7f3d0; }
+    .result.ng { color:#7f1d1d; background:#fef2f2; border:1px solid #fecaca; }
+    .note { font-size:14px; color:#374151; background:#fafafa; border:1px solid #eee; padding:10px; border-radius:12px; display:none; }
+
+    .foot { display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
+    .foot .btn { min-width:auto; padding:10px 14px; font-size:14px; }
+
+    .summary { text-align:center; }
+    .score-badge { font-weight:900; font-size:40px; letter-spacing:.02em; }
+    .score-badge .ok { color:var(--good); }
+    .score-badge .ng { color:var(--bad); }
+    .summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+    .summary-item { background:#fafafa; border:1px solid #eee; border-radius:12px; padding:10px; }
+
+    /* ルビの表示を安定化（スマホ最適化） */
+    ruby{ ruby-position:over; -webkit-ruby-position:before; }
+    ruby rb{ font-variant-east-asian:normal; }
+    ruby rt{
+      font-size:0.58em;
+      line-height:1;
+      letter-spacing:.02em;
+      text-emphasis:none;
+    }
+
+    /* PCホバープレビュー */
+    .link-preview { position:absolute; z-index:9999; display:none; width:420px; background:#fff; border:1px solid #e5e5e5; border-radius:12px; padding:12px; box-shadow:0 8px 24px rgba(0,0,0,.12); max-height:70vh; overflow:auto; }
+    .link-preview .host { font-size:12px; color:#6b7280; display:flex; align-items:center; gap:6px; }
+    .link-preview .host img { width:16px; height:16px; flex:0 0 16px; }
+    .link-preview .title { font-size:14px; font-weight:700; margin:6px 0 8px; line-height:1.3; }
+    .preview-grid { display:grid; grid-template-columns:1fr; gap:8px; }
+    .preview-img { display:block; width:100%; height:auto; object-fit:contain; border-radius:8px; background:#f6f6f6; }
+    .link-preview[data-loading="1"]{ background-image:linear-gradient(90deg,#fff,#f5f5f5,#fff); background-size:200% 100%; animation:lpShine 1.2s linear infinite; }
+    @keyframes lpShine{from{background-position:200% 0}to{background-position:-200% 0}}
+
+    /* スマホ：プレビューボタン＋モーダル */
+    .peek-btn{ display:none; } /* PC非表示 */
+    @media (hover:none){
+      .peek-btn{ display:inline-block; margin-left:8px; padding:6px 10px; border:1px solid #e5e7eb; border-radius:9999px; background:#fff; font-size:12px; line-height:1; }
+      .peek-btn:active{ transform:scale(.98); }
+      dialog.lp-sheet::backdrop{ background:rgba(0,0,0,.35); }
+      dialog.lp-sheet{ width:100vw; max-width:100vw; margin:0; padding:0; border:none; border-radius:16px 16px 0 0; position:fixed; bottom:0; left:0; max-height:85vh; overflow:hidden; }
+      .lp-sheet__wrap{ display:grid; grid-template-rows:auto 1fr; background:#fff; border-radius:inherit; }
+      .lp-sheet__header{ display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:1px solid #eee; }
+      .lp-sheet__header .favicon{ width:16px; height:16px; }
+      .lp-sheet__title{ font-weight:700; font-size:14px; line-height:1.3; flex:1; }
+      .lp-sheet__close{ border:none; background:transparent; font-size:18px; padding:6px 10px; }
+      .lp-sheet__body{ padding:12px 16px; overflow:auto; padding-bottom:calc(12px + env(safe-area-inset-bottom)); overscroll-behavior:contain; }
+      .lp-host{ font-size:12px; color:#6b7280; margin-bottom:6px; }
+      .lp-grid{ display:grid; grid-template-columns:1fr; gap:12px; }
+      .lp-img{ width:100%; height:auto; object-fit:contain; border-radius:8px; background:#f6f6f6; display:block; }
+      .lp-loading{ padding:24px; text-align:center; color:#6b7280; }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage" id="stage">
+    <header class="hdr">
+      <div class="title" id="modeTitle">ふつうにジャッジ</div>
+      <div class="progress" id="progress">読み込み中…</div>
+      <div class="modes">
+        <a class="mode-pill" id="pillNormal" href="?mode=normal">ふつうに</a>
+        <a class="mode-pill" id="pillRenzoku" href="?mode=renzoku">れんぞく</a>
+      </div>
+    </header>
+
+    <section id="qmount"></section>
+
+    <footer class="foot" id="footerNav">
+      <button class="btn secondary" id="btnReset" type="button">やり直し</button>
+      <button class="btn" id="btnNext" type="button">次の問題</button>
+    </footer>
+  </main>
+
+  <script>
+    const WEB_APP_URL = new URLSearchParams(location.search).get('data')
+      || 'https://script.google.com/macros/s/AKfycbxamOthK5jNBv03h-AlWiz0Q5BsJyiRFetWVmVkVAjdBPW_q0nDAGrwFSDEdqB0UNs/exec';
+    const ENDPOINT = `${WEB_APP_URL}?limit=200`;
+
+    const urlp = new URL(location.href).searchParams;
+    const MODE = urlp.get('mode') === 'renzoku' ? 'renzoku' : 'normal';
+    const MODE_LABEL = urlp.get('title') || (MODE === 'renzoku' ? 'れんぞくジャッジ' : 'ふつうにジャッジ');
+    document.getElementById('modeTitle').textContent = MODE_LABEL;
+    document.getElementById(MODE === 'renzoku' ? 'pillRenzoku' : 'pillNormal').classList.add('is-active');
+
+    // 埋め込み(iframe)対応
+    const EMBED = urlp.get('embed') === '1';
+    const EMBED_ID = urlp.get('embedId') || '';
+
+    const esc = (s) => (s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    const norm = (s) => (s ?? '').toString().trim().toLowerCase();
+
+    // === ルビ変換（プレースホルダ方式）
+    // ・「｜基底《よみ》」は基底にスペースや記号を含められる
+    // ・「基底《よみ》」は直前の連続する文字列（漢字/かな/カナ/英数/長音）を基底にする
+    function renderRuby(input){
+      if (!input) return '';
+      let s = String(input);
+      const tokens = [];
+      let n = 0;
+      const put = (rb, rt) => {
+        const token = `__RUBY_${n++}__`;
+        tokens.push([token, `<ruby><rb>${esc(rb)}</rb><rt>${esc(rt)}</rt></ruby>`]);
+        return token;
+      };
+      // 1) パイプ付き（全角/半角両対応）
+      s = s.replace(/[｜|]([^《》\n]+?)《([^《》\n]+?)》[｜|]?/g, (_, rb, rt) => put(rb, rt));
+      // 2) パイプ無し：直前の連続語を基底に（空白は含めない）
+      const RE_NAKED = /([一-龯々〆ヵヶｦ-ﾟぁ-ゖァ-ヺーA-Za-z0-9]+)《([^《》\n]+?)》/g;
+      s = s.replace(RE_NAKED, (_, rb, rt) => put(rb, rt));
+      // 全体エスケープ → トークン復元
+      s = esc(s);
+      for (const [t, html] of tokens) s = s.replace(t, html);
+      return s;
+    }
+
+    const toOX = (s) => {
+      const t = norm(s).replace(/[〇◯○]/g,'o').replace(/[✗×x]/g,'x');
+      if (['o','true','yes','y','ok','correct','maru'].includes(t)) return 'o';
+      if (['x','false','no','ng','batsu','wrong'].includes(t)) return 'x';
+      return null;
+    };
+    const pick = (arr, n) => arr.slice(0, n);
+
+    let master = [];
+    let items = [];
+    let idx = 0;
+    let score = { ok:0, ng:0 };
+
+    fetch(ENDPOINT)
+      .then(r=>r.json())
+      .then(({items:list}) => {
+        master = (list || []).filter(Boolean);
+        if (!master.length) throw new Error('データが空です');
+        startRound();
+      })
+      .catch(err => {
+        console.error(err);
+        document.getElementById('qmount').innerHTML = '<p style="padding:16px;background:#fff;border-radius:12px;border:1px solid #eee">読み込みに失敗しました。</p>';
+        postEmbedHeight();
+      });
+
+    function startRound(){
+      const pool = [...master];
+      for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+      items = MODE === 'normal' ? pick(pool, Math.min(10, pool.length)) : pool;
+      idx = 0; score = { ok:0, ng:0 };
+      document.getElementById('btnNext').style.display = '';
+      document.getElementById('btnReset').textContent = 'やり直し';
+      render();
+    }
+
+    function render(){
+      const total = items.length, n = idx+1;
+      document.getElementById('progress').textContent = `Q${n} / ${total}　正答: ${score.ok}　誤答: ${score.ng}`;
+
+      const q = items[idx];
+      const root = document.getElementById('qmount');
+      root.innerHTML = createQuestionHtml(q, n);
+
+      const btnO = root.querySelector('#btnO');
+      const btnX = root.querySelector('#btnX');
+      const btnNext = document.getElementById('btnNext');
+      let answered = false;
+
+      const lock = () => { btnO.disabled = true; btnX.disabled = true; };
+      const showResult = (ok) => {
+        answered = true;
+        const res = root.querySelector('.result');
+        res.style.display = 'block';
+        res.classList.toggle('ok', ok);
+        res.classList.toggle('ng', !ok);
+        res.textContent = ok ? '正解！' : '不正解…';
+        root.querySelector('.note').style.display = 'block';
+        updateNextLabel();
+        postEmbedHeight();
+      };
+      const updateNextLabel = () => {
+        if (idx === total - 1) btnNext.textContent = answered ? '結果を見る' : '次の問題';
+        else btnNext.textContent = '次の問題';
+      };
+
+      btnO.addEventListener('click', () => {
+        lock();
+        const a = toOX(q.answer); const ok = (a === 'o');
+        if (a == null) { showResult(false); } else { ok ? score.ok++ : score.ng++; showResult(ok); }
+      });
+      btnX.addEventListener('click', () => {
+        lock();
+        const a = toOX(q.answer); const ok = (a === 'x');
+        if (a == null) { showResult(false); } else { ok ? score.ok++ : score.ng++; showResult(ok); }
+      });
+
+      updateNextLabel();
+
+      btnNext.onclick = () => {
+        if (idx >= total-1) { showFinal(); return; }
+        idx++; render();
+      };
+      document.getElementById('btnReset').onclick = () => startRound();
+
+      // キーボード
+      window.onkeydown = (e) => {
+        if (e.key.toLowerCase()==='o') btnO.click();
+        if (e.key.toLowerCase()==='x') btnX.click();
+        if (e.key==='ArrowRight') btnNext.click();
+      };
+
+      setupLinkPreviewDesktop(root);
+      setupMobilePreview(root);
+
+      root.querySelectorAll('img').forEach(img => {
+        img.addEventListener('load', postEmbedHeight, { once:true });
+      });
+
+      postEmbedHeight();
+    }
+
+    function showFinal(){
+      const total = items.length;
+      const acc = total ? Math.round((score.ok/total)*100) : 0;
+      document.getElementById('progress').textContent = `結果：正答 ${score.ok}/${total}（${acc}%）`;
+
+      const root = document.getElementById('qmount');
+      root.innerHTML = `
+        <article class="qcard summary">
+          <div class="score-badge">
+            <span class="ok">${score.ok}</span> / ${total}
+            <div style="font-size:14px;color:#6b7280;margin-top:4px;">正答数 / 出題数</div>
+          </div>
+          <div class="summary-grid">
+            <div class="summary-item"><div>正解</div><div style="font-weight:800;color:var(--good);font-size:20px">${score.ok}</div></div>
+            <div class="summary-item"><div>不正解</div><div style="font-weight:800;color:var(--bad);font-size:20px">${score.ng}</div></div>
+          </div>
+          <div style="margin-top:12px;font-size:14px;color:#374151;">正答率：<strong>${acc}%</strong></div>
+          <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
+            <button class="btn secondary" id="againSame">同じモードでもう一度</button>
+            <a class="btn" href="${location.pathname}?mode=${MODE === 'renzoku' ? 'normal' : 'renzoku'}">
+              ${MODE === 'renzoku' ? 'ふつうにジャッジへ' : 'れんぞくジャッジへ'}
+            </a>
+          </div>
+        </article>
+      `;
+
+      document.getElementById('btnNext').style.display = 'none';
+      const resetBtn = document.getElementById('btnReset');
+      resetBtn.textContent = 'トップへ戻る';
+      resetBtn.onclick = () => { location.href = location.pathname + `?mode=${MODE}`; };
+
+      document.getElementById('againSame').onclick = () => startRound();
+
+      postEmbedHeight();
+    }
+
+    function createQuestionHtml(q, n){
+      const linksHtml = (q.links && q.links.length)
+        ? `<div class="links">
+             ${q.links.map(l => {
+               const u = typeof l === 'string' ? l : (l.url || '');
+               const label = typeof l === 'string' ? '参考リンク' : (l.label || '参考リンク');
+               return `
+                 <div>
+                   <a href="${esc(u)}" target="_blank" rel="noopener">${esc(label)}</a>
+                   <button type="button" class="peek-btn" data-peek="${esc(u)}">プレビュー</button>
+                 </div>`;
+             }).join('')}
+           </div>` : '';
+
+      const meta = `
+        <div class="qmeta">
+          <span class="qno">Q${n}</span>
+          <span>難易度: ${esc(q.difficulty||'-')}</span>
+          <span>レギュ: ${esc(q.rule||'-')}</span>
+          <span>形式: ${esc(q.format||'-')}</span>
+          <span>ID: ${esc(q.id||'-')}</span>
+        </div>`;
+
+      return `
+        <article class="qcard" id="qcard">
+          ${meta}
+          <div class="qtext">${renderRuby(q.text || '')}</div>
+          ${linksHtml}
+          <div class="actions">
+            <button class="btn good" id="btnO" type="button">○ 正しい</button>
+            <button class="btn bad"  id="btnX" type="button">× 間違い</button>
+          </div>
+          <div class="result" aria-live="polite"></div>
+          <div class="note">
+            <div><strong>正答：</strong> ${esc(q.answer || '（未設定）')}</div>
+            ${q.note ? `<div style="margin-top:6px;">${renderRuby(q.note)}</div>` : ''}
+          </div>
+        </article>`;
+    }
+
+    /* === PCホバーのプレビュー === */
+    const PREVIEW_ENDPOINT = WEB_APP_URL;
+    function setupLinkPreviewDesktop(scope){
+      if (!window.matchMedia('(hover:hover)').matches) return;
+      let tip = document.querySelector('.link-preview');
+      if (!tip) { tip = document.createElement('div'); tip.className='link-preview'; tip.setAttribute('role','tooltip'); document.body.appendChild(tip); }
+      const cache = setupLinkPreviewDesktop._cache || (setupLinkPreviewDesktop._cache = new Map());
+      let showTimer=null, currentA=null;
+
+      const hide = () => { tip.style.display='none'; tip.removeAttribute('data-loading'); currentA=null; };
+      const place = (x,y) => {
+        const W=420, pad=12;
+        const left = Math.min(x+16, window.scrollX+document.documentElement.clientWidth-W-pad);
+        const top  = Math.min(y+16, window.scrollY+document.documentElement.clientHeight-tip.offsetHeight-pad);
+        tip.style.left=left+'px'; tip.style.top=top+'px';
+      };
+      const render = (d) => {
+        const imgs = d.image ? [d.image] : [];
+        const grid = imgs.length ? `<div class="preview-grid">${imgs.map(u=>`<a href="${u}" target="_blank" rel="noopener"><img class="preview-img" referrerpolicy="no-referrer" src="${u}" alt=""></a>`).join('')}</div>` : '';
+        tip.innerHTML = `<div class="host"><img src="${d.icon||''}" onerror="this.style.display='none'" alt=""><span>${(d.siteName||d.host||'').replace(/</g,'&lt;')}</span></div><div class="title">${(d.title||'').replace(/</g,'&lt;')}</div>${grid}`;
+        tip.removeAttribute('data-loading');
+      };
+
+      scope.addEventListener('mouseover', (e) => {
+        const a = e.target.closest('a[href]');
+        if (!a || !scope.contains(a)) return;
+        currentA = a;
+        clearTimeout(showTimer);
+        showTimer = setTimeout(async () => {
+          tip.dataset.loading='1'; tip.style.display='block';
+          place(e.clientX + window.scrollX, e.clientY + window.scrollY);
+          const url = a.href;
+          if (cache.has(url)) { render(cache.get(url)); return; }
+          try {
+            const r = await fetch(`${PREVIEW_ENDPOINT}?preview=${encodeURIComponent(url)}`);
+            const data = await r.json(); cache.set(url,data);
+            if (currentA===a) render(data);
+          } catch(_) { hide(); }
+        }, 180);
+      });
+      scope.addEventListener('mousemove', (e)=>{ if(tip.style.display==='block') place(e.clientX + window.scrollX, e.clientY + window.scrollY); });
+      scope.addEventListener('mouseout', (e)=>{ if(!e.target.closest('a[href]')) return; clearTimeout(showTimer); hide(); });
+    }
+
+    /* === スマホ：プレビューボタン＋ボトムシート === */
+    function setupMobilePreview(scope){
+      if (!window.matchMedia('(hover: none)').matches) return;
+      scope.querySelectorAll('button.peek-btn[data-peek]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          openSheet(btn.dataset.peek, btn.previousElementSibling?.textContent || 'リンク');
+        });
+      });
+
+      let sheet, bodyEl, titleEl, hostEl, favEl, loadingEl;
+      function ensureSheet(){
+        if (sheet) return sheet;
+        sheet = document.createElement('dialog');
+        sheet.className='lp-sheet';
+        sheet.innerHTML = `
+          <div class="lp-sheet__wrap">
+            <div class="lp-sheet__header" id="lpSheetHeader">
+              <img class="favicon" alt="" onerror="this.style.display='none'">
+              <div class="lp-sheet__title"></div>
+              <button class="lp-sheet__close" aria-label="閉じる">×</button>
+            </div>
+            <div class="lp-sheet__body">
+              <div class="lp-host"></div>
+              <div class="lp-grid" id="lpGrid"></div>
+              <div class="lp-loading" id="lpLoading" hidden>読み込み中…</div>
+            </div>
+          </div>`;
+        document.body.appendChild(sheet);
+
+        bodyEl = sheet.querySelector('#lpGrid');
+        titleEl= sheet.querySelector('.lp-sheet__title');
+        hostEl = sheet.querySelector('.lp-host');
+        favEl  = sheet.querySelector('.favicon');
+        loadingEl = sheet.querySelector('#lpLoading');
+
+        sheet.querySelector('.lp-sheet__close').addEventListener('click', ()=> sheet.close());
+        sheet.addEventListener('cancel', (e)=>{ e.preventDefault(); sheet.close(); });
+
+        // スワイプで閉じる
+        let sy=null, dy=0;
+        const hdr = sheet.querySelector('#lpSheetHeader');
+        hdr.addEventListener('touchstart', (e)=>{ if(!e.touches.length) return; sy=e.touches[0].clientY; dy=0; }, {passive:true});
+        hdr.addEventListener('touchmove',  (e)=>{
+          if(sy==null || !e.touches.length) return;
+          dy = e.touches[0].clientY - sy;
+          if(dy>0){ sheet.style.transform = `translateY(${dy}px)`; }
+        }, {passive:true});
+        hdr.addEventListener('touchend',   ()=>{
+          if(dy>80) sheet.close();
+          sheet.style.transform = '';
+          sy=null; dy=0;
+        });
+        return sheet;
+      }
+      const cache = setupMobilePreview._cache || (setupMobilePreview._cache = new Map());
+
+      async function openSheet(url, label){
+        ensureSheet();
+        titleEl.textContent = label || '';
+        hostEl.textContent = ''; favEl.src=''; bodyEl.innerHTML=''; loadingEl.hidden=false;
+
+        if (typeof sheet.showModal === 'function') sheet.showModal(); else sheet.setAttribute('open','');
+
+        try {
+          const data = cache.has(url) ? cache.get(url) :
+                       await fetch(`${WEB_APP_URL}?preview=${encodeURIComponent(url)}`).then(r=>r.json()).then(d => (cache.set(url,d), d));
+          const host = data.host || (new URL(url)).host;
+          hostEl.textContent = host;
+          favEl.src = data.icon || `https://${host}/favicon.ico`;
+          titleEl.textContent = data.title || label || host;
+
+          const imgs = data.image ? [data.image] : [];
+          bodyEl.innerHTML = imgs.length
+            ? imgs.map(u => `<a href="${u}" target="_blank" rel="noopener"><img class="lp-img" referrerpolicy="no-referrer" src="${u}" alt=""></a>`).join('')
+            : '<div style="color:#6b7280">画像はありません</div>';
+        } catch(err){
+          bodyEl.innerHTML = '<div style="color:#ef4444">プレビュー取得に失敗しました</div>';
+          console.error(err);
+        } finally { loadingEl.hidden = true; }
+      }
+    }
+
+    // === 埋め込み(iframe)時の高さ自動通知 ===
+    function postEmbedHeight(){
+      if (!EMBED || window.parent === window) return;
+      try{
+        requestAnimationFrame(() => {
+          const h = Math.max(
+            document.documentElement.scrollHeight,
+            document.body.scrollHeight
+          );
+          window.parent.postMessage(
+            { type:'quiz-embed-size', id: EMBED_ID || 'quiz1', height: Math.ceil(h) },
+            '*'
+          );
+        });
+      }catch(_){}
+    }
+    if (EMBED && window.parent !== window){
+      const ro = new ResizeObserver(postEmbedHeight);
+      ro.observe(document.documentElement);
+      window.addEventListener('load', postEmbedHeight);
+      window.addEventListener('resize', postEmbedHeight);
+      postEmbedHeight();
+    }
+  </script>
+</body>
+</html>
