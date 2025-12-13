@@ -1,88 +1,100 @@
 /* 始まりは.←こいつから */
-.background{
+/* .background {
     background-color: #FFF598;
-    margin:0 32px;
-    width:calc(100% - 64px);
-    height:100%;
-    /* 要素の固定↓（要素は今回はbackgroundになる）*/
+    margin: 0 32px;
+    width: calc(100% - 64px);
+    height: 100%;
+    
     position: fixed;
     z-index: -1;
     top: 0;
     left: 0;
     border: #000 1px solid;
+} */
+
+body{
+    font-family: "Noto Sans JP", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
 }
 
 
 /* カンマを入力すると複数の要素に適用できる↓ */
-header, .sec02, footer{
-     display: flex;
+header,
+.sec02,
+footer {
+    display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    margin: 80px 20px ;
-} 
-
-.sec01{
-   margin: 80px 0 ; 
-
-   h1{
-    margin-bottom: 24px;
-   }
+    margin: 80px 20px;
 }
 
-header .logo{
-width:320px;
-height:auto;}
+.sec01 {
+    margin: 80px 0;
 
-header p{
+    h1 {
+        margin-bottom: 24px;
+    }
+}
+
+header .logo {
+    width: 320px;
+    height: auto;
+}
+
+header p {
     font-weight: 800;
 }
 
-p,h1,h2{
+p,
+h1,
+h2 {
     text-align: center;
 }
 
-a{
-   color: #000; 
-   text-decoration: none;
-   transition: all .3s;
+a {
+    color: #000;
+    text-decoration: none;
+    transition: all .3s;
 }
 
-a:hover{
+a:hover {
     opacity: 0.7;
     transition: all .3s;
 }
 
-.mark{
+.mark {
     display: flex;
     justify-content: center;
-    align-items: center;   
- }
+    align-items: center;
+}
 
-.sec02{
-    h1{
-            margin-bottom: 24px;
+.sec02 {
+    h1 {
+        margin-bottom: 24px;
     }
 
-    .txt-area{
+    .txt-area {
         border: 1px #E5E7EB solid;
         filter: drop-shadow(0px 2px 8px rgba(0, 0, 0, 0.2));
         border-radius: 10px;
         padding: 64px 16px;
         font-weight: 600;
 
-        p:last-of-type{
+        p:last-of-type {
             margin-top: 24px;
         }
     }
 }
 
 
-.card-list{
+.card-list {
     display: grid;
-    grid-template-columns:1fr;
+    grid-template-columns: 1fr;
     place-content: center;
-    gap:24px;
+    gap: 24px;
 }
 
 /* 親要素↓ */
@@ -115,7 +127,7 @@ a:hover{
     height: auto;
 } */
 
-.card-botan{
+.card-botan {
     display: grid;
     padding: 0 42px;
     place-content: center;
@@ -124,7 +136,7 @@ a:hover{
     gap: 16px;
     position: relative;
 
-    .txt{
+    .txt {
         background-color: #fff;
         border: 1px #E5E7EB solid;
         height: 145px;
@@ -137,7 +149,7 @@ a:hover{
         font-weight: 800;
     }
 
-    .txt::after{
+    .txt::after {
         content: '→';
         color: #fff;
         position: absolute;
@@ -152,77 +164,124 @@ a:hover{
         background: linear-gradient(to bottom right, #F8E184, #7EB4FF, #FF3F3F);
     }
 
-    .card-img{
+    .card-img {
         width: 100px;
     }
 }
 
-.soon{
-    .card-img{
+.soon {
+    .card-img {
         display: flex;
         align-self: end;
     }
 
-    .txt{
+    .txt {
         background: #B8B8B8;
     }
 
-    .txt::after{
+    .txt::after {
         display: none;
     }
 }
 
 
 
-.quiz-poke{
-    .background{
+
+
+.quiz-poke {
+    /* .background {
         background-color: #ffc6bf;
-        margin:0 0px;
-        width:100vw;
-        height:100vh;
-        z-index: -1;
-        border: #000 0px solid;    
-    }
-    .card-botan::after{
+        margin: 0 0px;
         width: 100vw;
-         border-radius: 0px;
-         border: #000 0px solid;
-         border-top: #000 1px solid;
-         border-bottom: #000 1px solid;
+        height: 100vh;
+        z-index: -1;
+        border: #000 0px solid;
+    } */
+
+    .card-list{
+        margin-top: 32px;
+    }
+
+    .card-botan{
+        display: inline-block;
+        position: relative;
+
+        .txt{
+           position: absolute;
+           font-size: 24px;
+           width: 100vw;
+           height: auto;
+           padding: 16px 0;
+           text-align: center;
+           top: 50%;
+           left: 50%;
+           transform: translate(-50%, -50%);
+           border-radius: 0;
+           filter: none;
+           background-color: rgba(255, 255, 255, 0.4);
+           backdrop-filter: blur(22px);
+        }
+
+        .txt::after{
+            display: none;
+        }
 
     }
-    .card-img{
-    width: clamp(72px, 55%, 160px);
-    height: auto;
-}
-.potipoti{
-  background-color:#fff;
-  border: #000 1px solid; 
-  border-radius: 999px;
-  width: 12em; 
-  height: auto;
-  padding:1em 1.5em ;
-}
-.sentaku{
-  display: flex;
-    justify-content: center;
-    align-items: center; 
-    gap: 64px;
-    flex-direction: column; 
-    .potipoti{
-        font-size: 24px;
-        font-weight: 600;
+
+    .card-img {
+        width: 100%;
+        height: auto;
+    }
+
+    .potipoti {
+        background-color: #fff;
+        filter: drop-shadow(0px 2px 8px rgba(0, 0, 0, 0.2));
+        border: 1px #E5E7EB solid;
+        border-radius: 999px;
+        width: 12em;
+        height: auto;
+        padding: 1em 1.5em;
+
+        p{
+            width: auto;
+        }
+    }
+
+    .sentaku {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 64px;
+        flex-direction: column;
+
+        .potipoti {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .normal{
+            border: 2px solid #FF9A9A;
+            filter: drop-shadow(0px 2px 8px rgba(255, 154, 154, 0.2));
+        }
+
+        .renzoku{
+            border: 2px solid #8AA8EC;
+            filter: drop-shadow(0px 2px 8px rgba(138, 168, 236, 0.2));
+        }
+    }
+
+    .sentaku2 {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 48px;
+        margin-top: 64px;
+
+        .potipoti {
+            font-size: 14px;
+            font-weight: 600;
+            width: 9em;
+        }
     }
 }
-.sentaku2{
-    display: flex;
-    justify-content: center;
-    align-items: center; 
-    gap: 48px;
-    margin-top: 64px;
-    .potipoti{
-        font-size: 14px;
-        font-weight: 600;
-    }
-}
-}
+

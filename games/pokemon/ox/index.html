@@ -5,14 +5,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ポケモンカードゲーム | OX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&display=swap" rel="stylesheet">
   <style>
     :root{ --pink:#f9c9c9; }
     *{ box-sizing:border-box; }
     html,body{ height:100%; }
     body{
       margin:0;
-      background:var(--pink);
-      font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+      /* background:var(--pink); */
+      font-family: "Noto Sans JP", sans-serif;
+      font-optical-sizing: auto;
+      font-weight: 400;
+      font-style: normal;
       overflow-x:hidden;
     }
     header{
@@ -33,12 +39,31 @@
       overflow:hidden;
       border-radius:20px;
     }
+
+    .ox-title{
+      margin-top: 24px;
+    .logo{
+        width: 200px;
+        height: auto;
+    }
+}
+
+.bottom{
+  background-color: #fff;
+        filter: drop-shadow(0px 2px 8px rgba(0, 0, 0, 0.2));
+        border: 1px #E5E7EB solid;
+        border-radius: 999px;
+        height: auto;
+        padding: 1em 1.5em;
+        text-decoration: none;
+        font-weight: 600;
+}
   </style>
 </head>
 <body>
   <header>
-    <div id="pageTitle" style="font-weight:700;">ポケモンカードゲーム | OX</div>
-    <a href="/games/pokemon/">メニューへ戻る</a>
+    <div id="pageTitle" class="ox-title"><img class="logo" src="/assets/logo.png"></div>
+    <a href="/games/pokemon/" class="bottom">メニューへ戻る</a>
   </header>
 
   <main class="frame-wrap">
@@ -61,7 +86,7 @@
   const mode  = params.get('mode') === 'renzoku' ? 'renzoku' : 'normal';
   const label = mode === 'renzoku' ? 'れんぞくジャッジ' : 'ふつうにジャッジ';
   const titleEl = document.getElementById('pageTitle');
-  if (titleEl) titleEl.textContent = `ポケモンカードゲーム | ${label}`;
+  // if (titleEl) titleEl.textContent = `ポケモンカードゲーム | ${label}`;
 
   const dataUrl = 'https://script.google.com/macros/s/AKfycby1Nc3nBm-5PKCdZ8pNdNKRPChBbqeXwiZjcEsRZFdkUShDTtym3aJDUZsEWvsW9r8x/exec';
   const embedId = 'poke-ox';
