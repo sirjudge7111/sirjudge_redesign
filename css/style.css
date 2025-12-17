@@ -219,8 +219,10 @@ a:hover {
            transform: translate(-50%, -50%);
            border-radius: 0;
            filter: none;
-           background-color: rgba(255, 255, 255, 0.4);
-           backdrop-filter: blur(22px);
+           /* background-color: rgba(255, 255, 255, 0.4);
+           backdrop-filter: blur(22px); */
+           background-color: rgba(255, 255, 255, 0.1);
+           backdrop-filter: blur(4px);
         }
 
         .txt::after{
