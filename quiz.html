@@ -93,9 +93,98 @@
       .lp-img{ width:100%; height:auto; object-fit:contain; border-radius:8px; background:#f6f6f6; display:block; }
       .lp-loading{ padding:24px; text-align:center; color:#6b7280; }
     }
+
+    /* カスタム確認ダイアログ */
+    .confirm-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+    }
+    .confirm-overlay.is-open {
+      opacity: 1;
+      visibility: visible;
+    }
+    .confirm-dialog {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      max-width: 320px;
+      width: calc(100% - 32px);
+      padding: 24px;
+      text-align: center;
+      transform: scale(0.95);
+      transition: transform 0.2s;
+    }
+    .confirm-overlay.is-open .confirm-dialog {
+      transform: scale(1);
+    }
+    .confirm-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+    .confirm-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 8px;
+    }
+    .confirm-message {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .confirm-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    .confirm-btn {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      padding: 12px 20px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 600;
+      min-width: 100px;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .confirm-btn:active {
+      transform: scale(0.98);
+    }
+    .confirm-btn.cancel {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #e5e7eb;
+    }
+    .confirm-btn.ok {
+      background: #111827;
+      color: #fff;
+    }
   </style>
 </head>
 <body>
+  <!-- カスタム確認ダイアログ -->
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-dialog">
+      <div class="confirm-icon">⚠️</div>
+      <div class="confirm-title">モードを切り替えますか？</div>
+      <div class="confirm-message">クイズの途中です。<br>進行状況がリセットされます。</div>
+      <div class="confirm-buttons">
+        <button class="confirm-btn cancel" id="confirmCancel">キャンセル</button>
+        <button class="confirm-btn ok" id="confirmOk">切り替える</button>
+      </div>
+    </div>
+  </div>
+
   <main class="stage" id="stage">
     <header class="hdr">
       <div class="title" id="modeTitle">ふつうにジャッジ</div>
@@ -132,49 +221,87 @@
     (function setupModeLinks(){
       const pillNormal = document.getElementById('pillNormal');
       const pillRenzoku = document.getElementById('pillRenzoku');
+      
+      // カスタム確認ダイアログ
+      const overlay = document.getElementById('confirmOverlay');
+      const btnCancel = document.getElementById('confirmCancel');
+      const btnOk = document.getElementById('confirmOk');
 
-      // 埋め込みモード（iframe内）の場合は親のURLを変更
-      if (EMBED && window.parent !== window) {
-        pillNormal.href = '#';
-        pillRenzoku.href = '#';
-
-        pillNormal.addEventListener('click', (e) => {
-          e.preventDefault();
-          if (MODE === 'normal') return; // 既に選択中
-          try {
-            const parentUrl = new URL(window.parent.location.href);
-            parentUrl.searchParams.set('mode', 'normal');
-            window.parent.location.href = parentUrl.toString();
-          } catch(_) {
-            // クロスオリジンの場合はフォールバック
-            window.parent.location.search = '?mode=normal';
-          }
-        });
-
-        pillRenzoku.addEventListener('click', (e) => {
-          e.preventDefault();
-          if (MODE === 'renzoku') return; // 既に選択中
-          try {
-            const parentUrl = new URL(window.parent.location.href);
-            parentUrl.searchParams.set('mode', 'renzoku');
-            window.parent.location.href = parentUrl.toString();
-          } catch(_) {
-            // クロスオリジンの場合はフォールバック
-            window.parent.location.search = '?mode=renzoku';
-          }
-        });
-      } else {
-        // 単独表示の場合は全パラメータを保持してリンクを生成
-        const baseParams = new URLSearchParams(location.search);
-        
-        const normalParams = new URLSearchParams(baseParams);
-        normalParams.set('mode', 'normal');
-        pillNormal.href = '?' + normalParams.toString();
-
-        const renzokuParams = new URLSearchParams(baseParams);
-        renzokuParams.set('mode', 'renzoku');
-        pillRenzoku.href = '?' + renzokuParams.toString();
+      // クイズ進行中かどうかをチェック
+      function isInProgress() {
+        return idx > 0 || score.ok > 0 || score.ng > 0;
       }
+
+      // カスタム確認ダイアログを表示（Promiseで返す）
+      function showConfirmDialog() {
+        return new Promise((resolve) => {
+          overlay.classList.add('is-open');
+          
+          const handleOk = () => {
+            overlay.classList.remove('is-open');
+            cleanup();
+            resolve(true);
+          };
+          const handleCancel = () => {
+            overlay.classList.remove('is-open');
+            cleanup();
+            resolve(false);
+          };
+          const handleOverlay = (e) => {
+            if (e.target === overlay) handleCancel();
+          };
+          const handleKeydown = (e) => {
+            if (e.key === 'Escape') handleCancel();
+            if (e.key === 'Enter') handleOk();
+          };
+          
+          const cleanup = () => {
+            btnOk.removeEventListener('click', handleOk);
+            btnCancel.removeEventListener('click', handleCancel);
+            overlay.removeEventListener('click', handleOverlay);
+            document.removeEventListener('keydown', handleKeydown);
+          };
+          
+          btnOk.addEventListener('click', handleOk);
+          btnCancel.addEventListener('click', handleCancel);
+          overlay.addEventListener('click', handleOverlay);
+          document.addEventListener('keydown', handleKeydown);
+        });
+      }
+
+      // モード切り替え実行
+      function switchToMode(targetMode) {
+        if (EMBED && window.parent !== window) {
+          try {
+            const parentUrl = new URL(window.parent.location.href);
+            parentUrl.searchParams.set('mode', targetMode);
+            window.parent.location.href = parentUrl.toString();
+          } catch(_) {
+            window.parent.location.search = '?mode=' + targetMode;
+          }
+        } else {
+          const params = new URLSearchParams(location.search);
+          params.set('mode', targetMode);
+          location.href = '?' + params.toString();
+        }
+      }
+
+      // クリックハンドラ
+      async function handleModeClick(e, targetMode) {
+        e.preventDefault();
+        if (MODE === targetMode) return; // 既に選択中
+        
+        if (isInProgress()) {
+          const confirmed = await showConfirmDialog();
+          if (!confirmed) return;
+        }
+        switchToMode(targetMode);
+      }
+
+      pillNormal.href = '#';
+      pillRenzoku.href = '#';
+      pillNormal.addEventListener('click', (e) => handleModeClick(e, 'normal'));
+      pillRenzoku.addEventListener('click', (e) => handleModeClick(e, 'renzoku'));
     })();
 
     const esc = (s) => (s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -262,8 +389,26 @@
         res.classList.toggle('ng', !ok);
         res.textContent = ok ? '正解！' : '不正解…';
         root.querySelector('.note').style.display = 'block';
-        updateNextLabel();
+        
+        // れんぞくモードで不正解なら即終了
+        if (MODE === 'renzoku' && !ok) {
+          res.textContent = '不正解… ゲームオーバー！';
+          btnNext.textContent = '結果を見る';
+          btnNext.onclick = () => showFinal();
+        } else {
+          updateNextLabel();
+        }
         postEmbedHeight();
+        
+        // ページ最下部へスクロール
+        requestAnimationFrame(() => {
+          if (EMBED && window.parent !== window) {
+            // 埋め込みモード：親ウィンドウにスクロール要求を送信
+            window.parent.postMessage({ type: 'quiz-scroll-bottom', id: EMBED_ID }, '*');
+          }
+          // iframe内 or 単独表示：自身もスクロール
+          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        });
       };
       const updateNextLabel = () => {
         if (idx === total - 1) btnNext.textContent = answered ? '結果を見る' : '次の問題';
@@ -308,36 +453,95 @@
 
     function showFinal(){
       const total = items.length;
-      const acc = total ? Math.round((score.ok/total)*100) : 0;
-      document.getElementById('progress').textContent = `結果：正答 ${score.ok}/${total}（${acc}%）`;
+      const answered = score.ok + score.ng;
+      const acc = answered ? Math.round((score.ok/answered)*100) : 0;
+      
+      // れんぞくモードの場合は連続正解数を強調
+      const isRenzoku = MODE === 'renzoku';
+      const headerText = isRenzoku 
+        ? `結果：${score.ok}問連続正解！`
+        : `結果：正答 ${score.ok}/${answered}（${acc}%）`;
+      document.getElementById('progress').textContent = headerText;
 
       const root = document.getElementById('qmount');
-      root.innerHTML = `
-        <article class="qcard summary">
-          <div class="score-badge">
-            <span class="ok">${score.ok}</span> / ${total}
-            <div style="font-size:14px;color:#6b7280;margin-top:4px;">正答数 / 出題数</div>
-          </div>
-          <div class="summary-grid">
-            <div class="summary-item"><div>正解</div><div style="font-weight:800;color:var(--good);font-size:20px">${score.ok}</div></div>
-            <div class="summary-item"><div>不正解</div><div style="font-weight:800;color:var(--bad);font-size:20px">${score.ng}</div></div>
-          </div>
-          <div style="margin-top:12px;font-size:14px;color:#374151;">正答率：<strong>${acc}%</strong></div>
-          <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
-            <button class="btn secondary" id="againSame">同じモードでもう一度</button>
-            <a class="btn" href="${location.pathname}?mode=${MODE === 'renzoku' ? 'normal' : 'renzoku'}">
-              ${MODE === 'renzoku' ? 'ふつうにジャッジへ' : 'れんぞくジャッジへ'}
-            </a>
-          </div>
-        </article>
-      `;
+      
+      if (isRenzoku) {
+        // れんぞくモード用の結果画面
+        root.innerHTML = `
+          <article class="qcard summary">
+            <div class="score-badge">
+              <span class="ok">${score.ok}</span>問
+              <div style="font-size:14px;color:#6b7280;margin-top:4px;">連続正解</div>
+            </div>
+            <div class="summary-grid">
+              <div class="summary-item"><div>連続正解</div><div style="font-weight:800;color:var(--good);font-size:20px">${score.ok}</div></div>
+              <div class="summary-item"><div>全問題数</div><div style="font-weight:800;color:#6b7280;font-size:20px">${total}</div></div>
+            </div>
+            ${score.ok === total 
+              ? '<div style="margin-top:12px;font-size:16px;color:var(--good);font-weight:800;">🎉 パーフェクト！ 🎉</div>'
+              : `<div style="margin-top:12px;font-size:14px;color:#374151;">あと <strong>${total - score.ok}問</strong> でパーフェクト</div>`
+            }
+            <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
+              <button class="btn secondary" id="againSame">もう一度チャレンジ</button>
+              <button class="btn" id="switchModeBtn" data-mode="normal">ふつうにジャッジへ</button>
+            </div>
+          </article>
+        `;
+      } else {
+        // 通常モード用の結果画面
+        root.innerHTML = `
+          <article class="qcard summary">
+            <div class="score-badge">
+              <span class="ok">${score.ok}</span> / ${answered}
+              <div style="font-size:14px;color:#6b7280;margin-top:4px;">正答数 / 出題数</div>
+            </div>
+            <div class="summary-grid">
+              <div class="summary-item"><div>正解</div><div style="font-weight:800;color:var(--good);font-size:20px">${score.ok}</div></div>
+              <div class="summary-item"><div>不正解</div><div style="font-weight:800;color:var(--bad);font-size:20px">${score.ng}</div></div>
+            </div>
+            <div style="margin-top:12px;font-size:14px;color:#374151;">正答率：<strong>${acc}%</strong></div>
+            <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
+              <button class="btn secondary" id="againSame">同じモードでもう一度</button>
+              <button class="btn" id="switchModeBtn" data-mode="renzoku">れんぞくジャッジへ</button>
+            </div>
+          </article>
+        `;
+      }
 
       document.getElementById('btnNext').style.display = 'none';
       const resetBtn = document.getElementById('btnReset');
       resetBtn.textContent = 'トップへ戻る';
-      resetBtn.onclick = () => { location.href = location.pathname + `?mode=${MODE}`; };
+      resetBtn.onclick = () => {
+        if (EMBED && window.parent !== window) {
+          try {
+            const parentUrl = new URL(window.parent.location.href);
+            parentUrl.searchParams.set('mode', MODE);
+            window.parent.location.href = parentUrl.toString();
+          } catch(_) {
+            window.parent.location.search = '?mode=' + MODE;
+          }
+        } else {
+          location.href = location.pathname + '?mode=' + MODE;
+        }
+      };
 
       document.getElementById('againSame').onclick = () => startRound();
+      
+      // モード切り替えボタンの処理（埋め込みモード対応）
+      document.getElementById('switchModeBtn').onclick = () => {
+        const targetMode = document.getElementById('switchModeBtn').dataset.mode;
+        if (EMBED && window.parent !== window) {
+          try {
+            const parentUrl = new URL(window.parent.location.href);
+            parentUrl.searchParams.set('mode', targetMode);
+            window.parent.location.href = parentUrl.toString();
+          } catch(_) {
+            window.parent.location.search = '?mode=' + targetMode;
+          }
+        } else {
+          location.href = location.pathname + '?mode=' + targetMode;
+        }
+      };
 
       postEmbedHeight();
     }

@@ -110,8 +110,19 @@
   }
   window.addEventListener('message', (e) => {
     const d = e.data;
-    if (!d || d.type !== 'quiz-embed-size' || d.id !== embedId) return;
-    setHeight(d.height);
+    if (!d || d.id !== embedId) return;
+    
+    // 高さ同期
+    if (d.type === 'quiz-embed-size') {
+      setHeight(d.height);
+    }
+    
+    // スクロール要求（◯×回答後にページ下部へ）
+    if (d.type === 'quiz-scroll-bottom') {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      });
+    }
   });
 
   // 読み込み・向き変更時に子へ ping（子が高さを再通知）
