@@ -139,6 +139,14 @@
         }
       }, 200);
     }
+    
+    // スクロール要求（次の問題でページ上部へ）
+    if (d.type === 'quiz-scroll-top') {
+      // 高さ更新を待ってからスクロール
+      setTimeout(() => {
+        scrollToTop();
+      }, 100);
+    }
   });
   
   function scrollToBottom() {
@@ -152,6 +160,15 @@
       window.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
     } catch(_) {
       window.scrollTo(0, Math.max(0, targetScroll));
+    }
+  }
+  
+  function scrollToTop() {
+    // iOS Safari対応
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch(_) {
+      window.scrollTo(0, 0);
     }
   }
 

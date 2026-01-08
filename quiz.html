@@ -432,8 +432,14 @@
       btnNext.onclick = () => {
         if (idx >= total-1) { showFinal(); return; }
         idx++; render();
+        // ページ上部へスクロール
+        scrollToTop();
       };
-      document.getElementById('btnReset').onclick = () => startRound();
+      document.getElementById('btnReset').onclick = () => {
+        startRound();
+        // ページ上部へスクロール
+        scrollToTop();
+      };
 
       // キーボード
       window.onkeydown = (e) => {
@@ -730,6 +736,24 @@
         });
       }catch(_){}
     }
+    
+    // === ページ上部へスクロール ===
+    function scrollToTop(){
+      setTimeout(() => {
+        if (EMBED && window.parent !== window) {
+          // 埋め込みモード：親ウィンドウにスクロール要求を送信
+          window.parent.postMessage({ type: 'quiz-scroll-top', id: EMBED_ID }, '*');
+        } else {
+          // 単独表示：自身をスクロール
+          try {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } catch(_) {
+            window.scrollTo(0, 0);
+          }
+        }
+      }, 100); // 高さ更新を待つ
+    }
+    
     if (EMBED && window.parent !== window){
       const ro = new ResizeObserver(postEmbedHeight);
       ro.observe(document.documentElement);
