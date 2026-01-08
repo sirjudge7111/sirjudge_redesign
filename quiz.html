@@ -400,15 +400,16 @@
         }
         postEmbedHeight();
         
-        // ページ最下部へスクロール
-        requestAnimationFrame(() => {
+        // ページ最下部へスクロール（高さ更新完了を待つ）
+        setTimeout(() => {
           if (EMBED && window.parent !== window) {
             // 埋め込みモード：親ウィンドウにスクロール要求を送信
             window.parent.postMessage({ type: 'quiz-scroll-bottom', id: EMBED_ID }, '*');
+          } else {
+            // 単独表示：自身をスクロール
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
           }
-          // iframe内 or 単独表示：自身もスクロール
-          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-        });
+        }, 150); // 高さ更新が反映されるのを待つ
       };
       const updateNextLabel = () => {
         if (idx === total - 1) btnNext.textContent = answered ? '結果を見る' : '次の問題';
