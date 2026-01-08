@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/reset.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&display=swap" rel="stylesheet">
+  <title>設定 | さぁジャッジ！</title>
+  <style>
+    .settings-container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    .settings-section {
+      background: #fff;
+      border: 1px solid #E5E7EB;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0px 2px 8px rgba(0, 0, 0, 0.1));
+    }
+
+    .settings-section h2 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #6b7280;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #E5E7EB;
+    }
+
+    .setting-item {
+      margin-bottom: 20px;
+    }
+
+    .setting-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .setting-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .setting-description {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 10px;
+    }
+
+    /* チェックボックス・ラジオボタングループ */
+    .option-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .option-btn {
+      appearance: none;
+      border: none;
+      background: #f3f4f6;
+      border: 1px solid #E5E7EB;
+      border-radius: 9999px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .option-btn:hover {
+      background: #e5e7eb;
+    }
+
+    .option-btn.selected {
+      background: #111827;
+      color: #fff;
+      border-color: #111827;
+    }
+
+    .option-btn .icon {
+      font-size: 16px;
+    }
+
+    /* トグルスイッチ */
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 52px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #d1d5db;
+      transition: 0.3s;
+      border-radius: 28px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .toggle-switch input:checked+.toggle-slider {
+      background-color: #10b981;
+    }
+
+    .toggle-switch input:checked+.toggle-slider:before {
+      transform: translateX(24px);
+    }
+
+    /* セレクトボックス風 */
+    .select-group {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .select-btn {
+      appearance: none;
+      border: 1px solid #E5E7EB;
+      background: #fff;
+      border-radius: 10px;
+      padding: 12px 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .select-btn:hover {
+      background: #f9fafb;
+    }
+
+    .select-btn.selected {
+      background: #111827;
+      color: #fff;
+      border-color: #111827;
+    }
+
+    /* 難易度の色分け */
+    .diff-easy.selected {
+      background: #10b981;
+      border-color: #10b981;
+    }
+
+    .diff-normal.selected {
+      background: #f59e0b;
+      border-color: #f59e0b;
+    }
+
+    .diff-hard.selected {
+      background: #ef4444;
+      border-color: #ef4444;
+    }
+
+    /* ボタン */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .btn {
+      flex: 1;
+      appearance: none;
+      border: none;
+      border-radius: 9999px;
+      padding: 14px 20px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: #111827;
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #E5E7EB;
+    }
+
+    .btn-reset {
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+
+    /* 保存完了トースト */
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #111827;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ヘッダー */
+    .settings-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .settings-header h1 {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .settings-header p {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    /* フッター固定のためのスペース */
+    .bottom-spacer {
+      height: 120px;
+    }
+
+    /* 固定フッター */
+    .fixed-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border-top: 1px solid #E5E7EB;
+      padding: 16px;
+      z-index: 100;
+    }
+
+    .fixed-footer .btn-row {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+
+<body class="quiz-poke">
+  <div class="background"></div>
+
+  <div class="settings-container">
+    <header class="settings-header">
+      <h1>⚙️ 設定</h1>
+      <p>クイズの出題条件をカスタマイズ</p>
+    </header>
+
+    <!-- 出題設定 -->
+    <section class="settings-section">
+      <h2>📝 出題設定</h2>
+
+      <div class="setting-item">
+        <span class="setting-label">レギュレーション</span>
+        <p class="setting-description">出題する問題のレギュレーションを選択</p>
+        <div class="option-group" id="reguGroup">
+          <button type="button" class="option-btn selected" data-value="all">すべて</button>
+          <button type="button" class="option-btn" data-value="スタンダード">スタンダード</button>
+          <button type="button" class="option-btn" data-value="エクストラ">エクストラ</button>
+          <button type="button" class="option-btn" data-value="殿堂">殿堂</button>
+        </div>
+      </div>
+
+      <div class="setting-item">
+        <span class="setting-label">難易度</span>
+        <p class="setting-description">出題する問題の難易度を選択（複数可）</p>
+        <div class="option-group" id="difficultyGroup">
+          <button type="button" class="option-btn diff-easy selected" data-value="かんたん">
+            <span class="icon">🟢</span>かんたん
+          </button>
+          <button type="button" class="option-btn diff-normal selected" data-value="ふつう">
+            <span class="icon">🟡</span>ふつう
+          </button>
+          <button type="button" class="option-btn diff-hard selected" data-value="むずかしい">
+            <span class="icon">🔴</span>むずかしい
+          </button>
+        </div>
+      </div>
+
+      <div class="setting-item">
+        <span class="setting-label">出題数（ふつうモード）</span>
+        <p class="setting-description">ふつうにジャッジの問題数</p>
+        <div class="select-group" id="countGroup">
+          <button type="button" class="select-btn" data-value="5">5問</button>
+          <button type="button" class="select-btn selected" data-value="10">10問</button>
+          <button type="button" class="select-btn" data-value="15">15問</button>
+          <button type="button" class="select-btn" data-value="20">20問</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 表示設定 -->
+    <section class="settings-section">
+      <h2>👁️ 表示設定</h2>
+
+      <div class="setting-item">
+        <div class="toggle-row">
+          <div>
+            <span class="setting-label">ルビ（ふりがな）表示</span>
+            <p class="setting-description">問題文のふりがなを表示</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="rubyToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="setting-item">
+        <div class="toggle-row">
+          <div>
+            <span class="setting-label">回答後に自動スクロール</span>
+            <p class="setting-description">◯×選択後に解説へ移動</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="autoScrollToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- データ管理 -->
+    <section class="settings-section">
+      <h2>🗑️ データ管理</h2>
+
+      <div class="setting-item">
+        <button type="button" class="btn btn-reset" id="resetBtn" style="width:100%">
+          設定をリセット
+        </button>
+        <p class="setting-description" style="margin-top:8px;text-align:center;">
+          すべての設定を初期状態に戻します
+        </p>
+      </div>
+    </section>
+
+    <div class="bottom-spacer"></div>
+  </div>
+
+  <!-- 固定フッター -->
+  <div class="fixed-footer">
+    <div class="btn-row">
+      <a href="/games/pokemon/" class="btn btn-secondary">戻る</a>
+      <button type="button" class="btn btn-primary" id="saveBtn">保存する</button>
+    </div>
+  </div>
+
+  <!-- トースト -->
+  <div class="toast" id="toast">✓ 設定を保存しました</div>
+
+  <script>
+    // デフォルト設定
+    const DEFAULT_SETTINGS = {
+      regulation: 'all',
+      difficulty: ['かんたん', 'ふつう', 'むずかしい'],
+      questionCount: 10,
+      showRuby: true,
+      autoScroll: true
+    };
+
+    // 現在の設定を読み込み
+    function loadSettings() {
+      try {
+        const saved = localStorage.getItem('quizSettings');
+        if (saved) {
+          return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+        }
+      } catch (e) {
+        console.error('設定の読み込みに失敗:', e);
+      }
+      return { ...DEFAULT_SETTINGS };
+    }
+
+    // 設定を保存
+    function saveSettings(settings) {
+      try {
+        localStorage.setItem('quizSettings', JSON.stringify(settings));
+        return true;
+      } catch (e) {
+        console.error('設定の保存に失敗:', e);
+        return false;
+      }
+    }
+
+    // UIに設定を反映
+    function applySettingsToUI(settings) {
+      // レギュレーション
+      document.querySelectorAll('#reguGroup .option-btn').forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.value === settings.regulation);
+      });
+
+      // 難易度
+      document.querySelectorAll('#difficultyGroup .option-btn').forEach(btn => {
+        btn.classList.toggle('selected', settings.difficulty.includes(btn.dataset.value));
+      });
+
+      // 出題数
+      document.querySelectorAll('#countGroup .select-btn').forEach(btn => {
+        btn.classList.toggle('selected', parseInt(btn.dataset.value) === settings.questionCount);
+      });
+
+      // トグル
+      document.getElementById('rubyToggle').checked = settings.showRuby;
+      document.getElementById('autoScrollToggle').checked = settings.autoScroll;
+    }
+
+    // UIから設定を取得
+    function getSettingsFromUI() {
+      const regulation = document.querySelector('#reguGroup .option-btn.selected')?.dataset.value || 'all';
+
+      const difficulty = Array.from(document.querySelectorAll('#difficultyGroup .option-btn.selected'))
+        .map(btn => btn.dataset.value);
+
+      const questionCount = parseInt(document.querySelector('#countGroup .select-btn.selected')?.dataset.value || '10');
+
+      const showRuby = document.getElementById('rubyToggle').checked;
+      const autoScroll = document.getElementById('autoScrollToggle').checked;
+
+      return { regulation, difficulty, questionCount, showRuby, autoScroll };
+    }
+
+    // トースト表示
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    // 初期化
+    document.addEventListener('DOMContentLoaded', () => {
+      const settings = loadSettings();
+      applySettingsToUI(settings);
+
+      // レギュレーション（単一選択）
+      document.querySelectorAll('#reguGroup .option-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#reguGroup .option-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+        });
+      });
+
+      // 難易度（複数選択）
+      document.querySelectorAll('#difficultyGroup .option-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          btn.classList.toggle('selected');
+          // 最低1つは選択
+          const selected = document.querySelectorAll('#difficultyGroup .option-btn.selected');
+          if (selected.length === 0) {
+            btn.classList.add('selected');
+          }
+        });
+      });
+
+      // 出題数（単一選択）
+      document.querySelectorAll('#countGroup .select-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#countGroup .select-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+        });
+      });
+
+      // 保存ボタン
+      document.getElementById('saveBtn').addEventListener('click', () => {
+        const settings = getSettingsFromUI();
+        if (saveSettings(settings)) {
+          showToast('✓ 設定を保存しました');
+        } else {
+          showToast('⚠ 保存に失敗しました');
+        }
+      });
+
+      // リセットボタン
+      document.getElementById('resetBtn').addEventListener('click', () => {
+        if (confirm('設定を初期状態に戻しますか？')) {
+          applySettingsToUI(DEFAULT_SETTINGS);
+          saveSettings(DEFAULT_SETTINGS);
+          showToast('✓ 設定をリセットしました');
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

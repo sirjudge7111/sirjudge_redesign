@@ -304,6 +304,29 @@
       pillRenzoku.addEventListener('click', (e) => handleModeClick(e, 'renzoku'));
     })();
 
+    // === 設定の読み込み ===
+    const DEFAULT_SETTINGS = {
+      regulation: 'all',
+      difficulty: ['かんたん', 'ふつう', 'むずかしい'],
+      questionCount: 10,
+      showRuby: true,
+      autoScroll: true
+    };
+    
+    function loadSettings() {
+      try {
+        const saved = localStorage.getItem('quizSettings');
+        if (saved) {
+          return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+        }
+      } catch (e) {
+        console.error('設定の読み込みに失敗:', e);
+      }
+      return { ...DEFAULT_SETTINGS };
+    }
+    
+    const SETTINGS = loadSettings();
+
     const esc = (s) => (s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     const norm = (s) => (s ?? '').toString().trim().toLowerCase();
 
@@ -313,6 +336,16 @@
     function renderRuby(input){
       if (!input) return '';
       let s = String(input);
+      
+      // ルビ非表示設定の場合、ルビ記法を除去してテキストのみ返す
+      if (!SETTINGS.showRuby) {
+        // パイプ付きルビを除去
+        s = s.replace(/[｜|]([^《》\n]+?)《[^《》\n]+?》[｜|]?/g, '$1');
+        // パイプ無しルビを除去
+        s = s.replace(/([一-龯々〆ヵヶｦ-ﾟぁ-ゖァ-ヺーA-Za-z0-9]+)《[^《》\n]+?》/g, '$1');
+        return esc(s);
+      }
+      
       const tokens = [];
       let n = 0;
       const put = (rb, rt) => {
@@ -358,9 +391,39 @@
       });
 
     function startRound(){
-      const pool = [...master];
-      for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
-      items = MODE === 'normal' ? pick(pool, Math.min(10, pool.length)) : pool;
+      // 設定に基づいてフィルタリング
+      let pool = [...master];
+      
+      // レギュレーションでフィルタ
+      if (SETTINGS.regulation !== 'all') {
+        pool = pool.filter(q => {
+          const qRegu = (q.rule || q.format || '').toString().trim();
+          return qRegu === SETTINGS.regulation || qRegu === '';
+        });
+      }
+      
+      // 難易度でフィルタ
+      if (SETTINGS.difficulty && SETTINGS.difficulty.length > 0) {
+        pool = pool.filter(q => {
+          const qDiff = (q.difficulty || '').toString().trim();
+          return SETTINGS.difficulty.includes(qDiff) || qDiff === '';
+        });
+      }
+      
+      // フィルタ後に問題がない場合は全問題を使用
+      if (pool.length === 0) {
+        pool = [...master];
+      }
+      
+      // シャッフル
+      for (let i = pool.length - 1; i > 0; i--) { 
+        const j = Math.floor(Math.random() * (i + 1)); 
+        [pool[i], pool[j]] = [pool[j], pool[i]]; 
+      }
+      
+      // モードに応じて出題数を決定
+      const questionCount = SETTINGS.questionCount || 10;
+      items = MODE === 'normal' ? pick(pool, Math.min(questionCount, pool.length)) : pool;
       idx = 0; score = { ok:0, ng:0 };
       document.getElementById('btnNext').style.display = '';
       document.getElementById('btnReset').textContent = 'やり直し';
@@ -400,16 +463,18 @@
         }
         postEmbedHeight();
         
-        // ページ最下部へスクロール（高さ更新完了を待つ）
-        setTimeout(() => {
-          if (EMBED && window.parent !== window) {
-            // 埋め込みモード：親ウィンドウにスクロール要求を送信
-            window.parent.postMessage({ type: 'quiz-scroll-bottom', id: EMBED_ID }, '*');
-          } else {
-            // 単独表示：自身をスクロール
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-          }
-        }, 150); // 高さ更新が反映されるのを待つ
+        // ページ最下部へスクロール（設定がONの場合のみ）
+        if (SETTINGS.autoScroll) {
+          setTimeout(() => {
+            if (EMBED && window.parent !== window) {
+              // 埋め込みモード：親ウィンドウにスクロール要求を送信
+              window.parent.postMessage({ type: 'quiz-scroll-bottom', id: EMBED_ID }, '*');
+            } else {
+              // 単独表示：自身をスクロール
+              window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            }
+          }, 150); // 高さ更新が反映されるのを待つ
+        }
       };
       const updateNextLabel = () => {
         if (idx === total - 1) btnNext.textContent = answered ? '結果を見る' : '次の問題';
