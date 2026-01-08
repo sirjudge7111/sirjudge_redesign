@@ -115,8 +115,7 @@
   </main>
 
   <script>
-    const WEB_APP_URL = new URLSearchParams(location.search).get('data')
-      || 'https://script.google.com/macros/s/AKfycbxamOthK5jNBv03h-AlWiz0Q5BsJyiRFetWVmVkVAjdBPW_q0nDAGrwFSDEdqB0UNs/exec';
+    const WEB_APP_URL = new URLSearchParams(location.search).get('data');
     const ENDPOINT = `${WEB_APP_URL}?limit=200`;
 
     const urlp = new URL(location.href).searchParams;
@@ -128,6 +127,55 @@
     // 埋め込み(iframe)対応
     const EMBED = urlp.get('embed') === '1';
     const EMBED_ID = urlp.get('embedId') || '';
+
+    // === モード切り替えリンクの動的設定 ===
+    (function setupModeLinks(){
+      const pillNormal = document.getElementById('pillNormal');
+      const pillRenzoku = document.getElementById('pillRenzoku');
+
+      // 埋め込みモード（iframe内）の場合は親のURLを変更
+      if (EMBED && window.parent !== window) {
+        pillNormal.href = '#';
+        pillRenzoku.href = '#';
+
+        pillNormal.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (MODE === 'normal') return; // 既に選択中
+          try {
+            const parentUrl = new URL(window.parent.location.href);
+            parentUrl.searchParams.set('mode', 'normal');
+            window.parent.location.href = parentUrl.toString();
+          } catch(_) {
+            // クロスオリジンの場合はフォールバック
+            window.parent.location.search = '?mode=normal';
+          }
+        });
+
+        pillRenzoku.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (MODE === 'renzoku') return; // 既に選択中
+          try {
+            const parentUrl = new URL(window.parent.location.href);
+            parentUrl.searchParams.set('mode', 'renzoku');
+            window.parent.location.href = parentUrl.toString();
+          } catch(_) {
+            // クロスオリジンの場合はフォールバック
+            window.parent.location.search = '?mode=renzoku';
+          }
+        });
+      } else {
+        // 単独表示の場合は全パラメータを保持してリンクを生成
+        const baseParams = new URLSearchParams(location.search);
+        
+        const normalParams = new URLSearchParams(baseParams);
+        normalParams.set('mode', 'normal');
+        pillNormal.href = '?' + normalParams.toString();
+
+        const renzokuParams = new URLSearchParams(baseParams);
+        renzokuParams.set('mode', 'renzoku');
+        pillRenzoku.href = '?' + renzokuParams.toString();
+      }
+    })();
 
     const esc = (s) => (s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     const norm = (s) => (s ?? '').toString().trim().toLowerCase();
