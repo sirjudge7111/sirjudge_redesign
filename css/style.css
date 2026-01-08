@@ -46,6 +46,7 @@ header .logo {
 
 header p {
     font-weight: 800;
+    white-space: nowrap;
 }
 
 p,
@@ -287,4 +288,3 @@ a:hover {
         }
     }
 }
-
