@@ -288,3 +288,90 @@ a:hover {
         }
     }
 }
+
+@media screen and (min-width: 768px) {
+    body{
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 40px;
+    }
+    
+    header{        
+         
+        .logo{
+            width: 400px;
+        }
+
+        p{
+            font-size: 18px;
+        }     
+    }
+
+    .sec02{
+        .txt-area{
+            padding: 80px 40px;
+            font-size: 20px;
+            max-width: 600px;
+            width: 100%;
+        }
+    }
+
+    .card-list{
+        grid-template-columns: repeat(2, 1fr);
+        gap: 32px;
+        /* max-width: 800px; */
+        margin: 0 auto;
+    }
+
+    .card-botan{
+        padding: 0 24px;
+
+        .txt{
+            height: 160px;
+            padding: 32px 24px;
+            font-size: 22px;
+        }
+
+        .card-img{
+            width: 120px;
+        }
+    }
+
+    .quiz-poke{
+        .card-list{
+            grid-template-columns: repeat(1, 1fr);
+            gap: 32px;
+        }
+    }
+
+}
+
+@media (min-width: 1024px) {
+    header{
+        .logo{
+            width: 450px;
+        }
+    }
+
+    header,
+    .sec02,
+    footer{
+        margin: 100px 40px;
+    }
+
+    .sec01{
+        margin: 100px 0;
+    }
+
+    .card-botan{
+        .txt{
+            height: 180px;
+            font-size: 24px;
+        }
+
+        .card-img{
+            width: 140px;
+        }
+    }
+
+}
