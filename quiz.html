@@ -470,8 +470,8 @@
               // 埋め込みモード：親ウィンドウにスクロール要求を送信
               window.parent.postMessage({ type: 'quiz-scroll-bottom', id: EMBED_ID }, '*');
             } else {
-              // 単独表示：自身をスクロール
-              window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+              // 単独表示：自身をスクロール（iOS対応でsmoothを使わない）
+              window.scrollTo(0, document.body.scrollHeight);
             }
           }, 150); // 高さ更新が反映されるのを待つ
         }
@@ -809,12 +809,8 @@
           // 埋め込みモード：親ウィンドウにスクロール要求を送信
           window.parent.postMessage({ type: 'quiz-scroll-top', id: EMBED_ID }, '*');
         } else {
-          // 単独表示：自身をスクロール
-          try {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          } catch(_) {
-            window.scrollTo(0, 0);
-          }
+          // 単独表示：自身をスクロール（iOS対応でsmoothを使わない）
+          window.scrollTo(0, 0);
         }
       }, 100); // 高さ更新を待つ
     }
