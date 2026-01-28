@@ -309,8 +309,7 @@
       regulation: 'all',
       difficulty: ['かんたん', 'ふつう', 'むずかしい'],
       questionCount: 10,
-      showRuby: true,
-      autoScroll: true
+      showRuby: true
     };
     
     function loadSettings() {
@@ -463,17 +462,21 @@
         }
         postEmbedHeight();
         
-        // ページ最下部へスクロール（設定がONの場合のみ）
-        if (SETTINGS.autoScroll) {
+        // iOS版Chrome検出（CriOSはiOS/iPadOS版Chromeの識別子）
+        const isIOSChrome = /CriOS/.test(navigator.userAgent);
+        
+        // ページ最下部へスクロール（iOS版Chrome以外の場合）
+        // ※iOS版Chromeではiframeの高さ更新とスクロールが競合して上に戻るバグがあるため無効化
+        if (!isIOSChrome) {
           setTimeout(() => {
             if (EMBED && window.parent !== window) {
               // 埋め込みモード：親ウィンドウにスクロール要求を送信
               window.parent.postMessage({ type: 'quiz-scroll-bottom', id: EMBED_ID }, '*');
             } else {
-              // 単独表示：自身をスクロール（iOS対応でsmoothを使わない）
+              // 単独表示：自身をスクロール
               window.scrollTo(0, document.body.scrollHeight);
             }
-          }, 150); // 高さ更新が反映されるのを待つ
+          }, 150);
         }
       };
       const updateNextLabel = () => {
