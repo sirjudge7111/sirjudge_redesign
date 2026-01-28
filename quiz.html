@@ -465,18 +465,28 @@
         // iOS版Chrome検出（CriOSはiOS/iPadOS版Chromeの識別子）
         const isIOSChrome = /CriOS/.test(navigator.userAgent);
         
-        // ページ最下部へスクロール（iOS版Chrome以外の場合）
-        // ※iOS版Chromeではiframeの高さ更新とスクロールが競合して上に戻るバグがあるため無効化
+        // ページ最下部へスクロール（iOS版Chrome以外）
+        // ※iOS版Chromeではiframeの高さ更新とスクロールの競合でバグが発生するため無効化
         if (!isIOSChrome) {
           setTimeout(() => {
+            // 現在の高さを取得
+            const currentHeight = Math.max(
+              document.documentElement.scrollHeight,
+              document.body.scrollHeight
+            );
+            
             if (EMBED && window.parent !== window) {
-              // 埋め込みモード：親ウィンドウにスクロール要求を送信
-              window.parent.postMessage({ type: 'quiz-scroll-bottom', id: EMBED_ID }, '*');
+              // 埋め込みモード：親ウィンドウにスクロール要求を送信（高さも含める）
+              window.parent.postMessage({ 
+                type: 'quiz-scroll-bottom', 
+                id: EMBED_ID,
+                height: currentHeight
+              }, '*');
             } else {
-              // 単独表示：自身をスクロール
-              window.scrollTo(0, document.body.scrollHeight);
+              // 単独表示：自身をスクロール（スムーススクロール）
+              window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
             }
-          }, 150);
+          }, 200);
         }
       };
       const updateNextLabel = () => {
@@ -808,21 +818,52 @@
     // === ページ上部へスクロール ===
     function scrollToTop(){
       setTimeout(() => {
+        // 現在の高さを取得
+        const currentHeight = Math.max(
+          document.documentElement.scrollHeight,
+          document.body.scrollHeight
+        );
+        
         if (EMBED && window.parent !== window) {
-          // 埋め込みモード：親ウィンドウにスクロール要求を送信
-          window.parent.postMessage({ type: 'quiz-scroll-top', id: EMBED_ID }, '*');
+          // 埋め込みモード：親ウィンドウにスクロール要求を送信（高さも含める）
+          window.parent.postMessage({ 
+            type: 'quiz-scroll-top', 
+            id: EMBED_ID,
+            height: currentHeight
+          }, '*');
         } else {
-          // 単独表示：自身をスクロール（iOS対応でsmoothを使わない）
-          window.scrollTo(0, 0);
+          // 単独表示：自身をスクロール（スムーススクロール）
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       }, 100); // 高さ更新を待つ
     }
     
+    // === デバウンス付き高さ更新 ===
+    let heightDebounceTimer = null;
+    let lastReportedHeight = 0;
+    
+    function debouncedPostEmbedHeight() {
+      if (heightDebounceTimer) {
+        clearTimeout(heightDebounceTimer);
+      }
+      heightDebounceTimer = setTimeout(() => {
+        const h = Math.max(
+          document.documentElement.scrollHeight,
+          document.body.scrollHeight
+        );
+        // 高さの変化が10px以上の場合のみ更新（細かい変動を無視）
+        if (Math.abs(h - lastReportedHeight) > 10) {
+          lastReportedHeight = h;
+          postEmbedHeight();
+        }
+      }, 100);
+    }
+    
     if (EMBED && window.parent !== window){
-      const ro = new ResizeObserver(postEmbedHeight);
+      const ro = new ResizeObserver(debouncedPostEmbedHeight);
       ro.observe(document.documentElement);
       window.addEventListener('load', postEmbedHeight);
-      window.addEventListener('resize', postEmbedHeight);
+      window.addEventListener('resize', debouncedPostEmbedHeight);
       postEmbedHeight();
     }
   </script>
