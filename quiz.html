@@ -476,7 +476,10 @@
         if (MODE === 'renzoku' && !ok) {
           res.textContent = '不正解… ゲームオーバー！';
           btnNext.textContent = '結果を見る';
-          btnNext.onclick = () => showFinal();
+          btnNext.onclick = () => {
+            showFinal();
+            scrollToTop();
+          };
         } else {
           updateNextLabel();
         }
@@ -522,7 +525,12 @@
       updateNextLabel();
 
       btnNext.onclick = () => {
-        if (idx >= total-1) { showFinal(); return; }
+        if (idx >= total-1) { 
+          showFinal(); 
+          // 結果画面表示時にページ上部へスクロール
+          scrollToTop();
+          return; 
+        }
         idx++; render();
         // ページ上部へスクロール
         scrollToTop();
