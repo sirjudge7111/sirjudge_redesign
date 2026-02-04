@@ -481,35 +481,24 @@
           updateNextLabel();
         }
         
-        // レイアウトが確定するまで待機してから高さを報告
-        setTimeout(() => {
-          postEmbedHeight();
-        }, 50);
-        
         // iOS版Chrome検出（CriOSはiOS/iPadOS版Chromeの識別子）
         const isIOSChrome = /CriOS/.test(navigator.userAgent);
         
-        // ページ最下部へスクロール（iOS版Chrome以外）
-        // ※iOS版Chromeではiframeの高さ更新とスクロールの競合でバグが発生するため無効化
-        if (!isIOSChrome) {
+        // レイアウト確定を待ってから、スクロール要求を送信（高さはスクロール要求に含める）
+        if (!isIOSChrome && EMBED && window.parent !== window) {
           setTimeout(() => {
-            // 現在の高さを取得
             const currentHeight = Math.max(
               document.documentElement.scrollHeight,
-              document.body.scrollHeight
+              document.body.scrollHeight,
+              document.documentElement.offsetHeight
             );
             
-            if (EMBED && window.parent !== window) {
-              // 埋め込みモード：親ウィンドウにスクロール要求を送信（高さも含める）
-              window.parent.postMessage({ 
-                type: 'quiz-scroll-bottom', 
-                id: EMBED_ID,
-                height: currentHeight
-              }, '*');
-            } else {
-              // 単独表示：自身をスクロール（スムーススクロール）
-              window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-            }
+            // スクロール要求で高さも一緒に送信（高さ更新はスクロール時のみ）
+            window.parent.postMessage({ 
+              type: 'quiz-scroll-bottom', 
+              id: EMBED_ID,
+              height: Math.ceil(currentHeight)
+            }, '*');
           }, 150);
         }
       };
@@ -560,11 +549,16 @@
       setupLinkPreviewDesktop(root);
       setupMobilePreview(root);
 
-      root.querySelectorAll('img').forEach(img => {
-        img.addEventListener('load', postEmbedHeight, { once:true });
-      });
-
+      // 初回高さ報告
       postEmbedHeight();
+      
+      // 画像読み込み完了時も高さを更新
+      root.querySelectorAll('img').forEach(img => {
+        if (!img.complete) {
+          img.addEventListener('load', postEmbedHeight, { once: true });
+          img.addEventListener('error', postEmbedHeight, { once: true });
+        }
+      });
     }
 
     function showFinal(){
@@ -833,15 +827,20 @@
     function postEmbedHeight(){
       if (!EMBED || window.parent === window) return;
       try{
-        // テキスト折り返けが完了するのを待つため、複数フレーム待機
+        // より正確な高さ計算：複数の計算方法を組み合わせ、全コンテンツを含める
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            const h = Math.max(
-              document.documentElement.scrollHeight,
-              document.body.scrollHeight
-            );
+            // スクロール範囲全体を高さとする（余白は加算しない）
+            const scrollHeight = document.documentElement.scrollHeight;
+            const bodyHeight = document.body.scrollHeight;
+            const offsetHeight = document.documentElement.offsetHeight;
+            
+            // 最も大きい値を採用（コンテンツをすべて含める）
+            let h = Math.max(scrollHeight, bodyHeight, offsetHeight);
+            h = Math.ceil(h);
+            
             window.parent.postMessage(
-              { type:'quiz-embed-size', id: EMBED_ID || 'quiz1', height: Math.ceil(h) },
+              { type:'quiz-embed-size', id: EMBED_ID || 'quiz1', height: h },
               '*'
             );
           });

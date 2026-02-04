@@ -117,15 +117,15 @@
   function setHeight(h){
     const minH = bootH;
     const newH = Math.max(minH, Math.ceil(h));
-    // 高さの変化が5px以上の場合のみ更新（細かい変動でのガタつきを防止）
-    if (Math.abs(newH - lastSetHeight) > 5) {
+    // 高さの変化が10px以上の場合のみ更新（細かい変動でのガタつきを防止）
+    // ※余白を加算しない（高さが無限に増えるのを防ぐ）
+    if (Math.abs(newH - lastSetHeight) > 10) {
       lastSetHeight = newH;
       iframe.style.height = newH + 'px';
     }
   }
   
-  let pendingScrollTop = false;    // 上スクロール要求フラグ
-  let pendingScrollBottom = false; // 下スクロール要求フラグ
+  let scrollTimeout = null; // スクロール要求のデバウンス
   
   window.addEventListener('message', (e) => {
     const d = e.data;
@@ -133,21 +133,22 @@
     
     // 高さ同期
     if (d.type === 'quiz-embed-size') {
-      if (scrolling) {
+      if (!scrolling) {
+        setHeight(d.height);
+      } else {
         // スクロール中は高さを保留
         pendingHeight = d.height;
-      } else {
-        setHeight(d.height);
       }
     }
     
     // スクロール要求（◯×回答後にページ下部へ）
     if (d.type === 'quiz-scroll-bottom') {
-      pendingScrollBottom = true;
-      pendingScrollTop = false;
+      // スクロール中の場合は無視（デバウンス）
+      if (scrolling) return;
+      
       scrolling = true;
       
-      // 高さが指定されていれば先に確定（閾値を無視して強制更新）
+      // 高さが指定されていれば先に確定
       if (d.height) {
         const minH = bootH;
         const newH = Math.max(minH, Math.ceil(d.height));
@@ -156,37 +157,33 @@
       }
       
       // 高さ反映を待ってからスクロール実行
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (pendingScrollBottom) {
-            pendingScrollBottom = false;
-            
-            // iframeの下端位置を計算してスクロール
-            const iframeRect = iframe.getBoundingClientRect();
-            const iframeBottom = window.scrollY + iframeRect.bottom;
-            const targetScroll = iframeBottom - window.innerHeight + 80;
-            window.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
-            
-            // スクロール完了後にロック解除＆保留中の高さを反映
-            setTimeout(() => {
-              scrolling = false;
-              if (pendingHeight !== null) {
-                setHeight(pendingHeight);
-                pendingHeight = null;
-              }
-            }, 600);
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        // iframeの下端位置を計算してスクロール
+        const iframeRect = iframe.getBoundingClientRect();
+        const iframeBottom = window.scrollY + iframeRect.bottom;
+        const targetScroll = iframeBottom - window.innerHeight + 60;
+        window.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
+        
+        // スクロール完了後にロック解除
+        setTimeout(() => {
+          scrolling = false;
+          if (pendingHeight !== null) {
+            setHeight(pendingHeight);
+            pendingHeight = null;
           }
-        });
-      });
+        }, 600);
+      }, 50);
     }
     
     // スクロール要求（次の問題でページ上部へ）
     if (d.type === 'quiz-scroll-top') {
-      pendingScrollTop = true;
-      pendingScrollBottom = false;
+      // スクロール中の場合は無視（デバウンス）
+      if (scrolling) return;
+      
       scrolling = true;
       
-      // 高さが指定されていれば先に確定（閾値を無視して強制更新）
+      // 高さが指定されていれば先に確定
       if (d.height) {
         const minH = bootH;
         const newH = Math.max(minH, Math.ceil(d.height));
@@ -194,21 +191,20 @@
         iframe.style.height = newH + 'px';
       }
       
-      requestAnimationFrame(() => {
-        if (pendingScrollTop) {
-          pendingScrollTop = false;
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          
-          // スクロール完了後にロック解除＆保留中の高さを反映
-          setTimeout(() => {
-            scrolling = false;
-            if (pendingHeight !== null) {
-              setHeight(pendingHeight);
-              pendingHeight = null;
-            }
-          }, 600);
-        }
-      });
+      // スクロール実行
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // スクロール完了後にロック解除
+        setTimeout(() => {
+          scrolling = false;
+          if (pendingHeight !== null) {
+            setHeight(pendingHeight);
+            pendingHeight = null;
+          }
+        }, 600);
+      }, 50);
     }
   });
 
