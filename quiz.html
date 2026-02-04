@@ -460,7 +460,11 @@
         } else {
           updateNextLabel();
         }
-        postEmbedHeight();
+        
+        // レイアウトが確定するまで待機してから高さを報告
+        setTimeout(() => {
+          postEmbedHeight();
+        }, 50);
         
         // iOS版Chrome検出（CriOSはiOS/iPadOS版Chromeの識別子）
         const isIOSChrome = /CriOS/.test(navigator.userAgent);
@@ -486,7 +490,7 @@
               // 単独表示：自身をスクロール（スムーススクロール）
               window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
             }
-          }, 200);
+          }, 150);
         }
       };
       const updateNextLabel = () => {
@@ -802,15 +806,18 @@
     function postEmbedHeight(){
       if (!EMBED || window.parent === window) return;
       try{
+        // テキスト折り返けが完了するのを待つため、複数フレーム待機
         requestAnimationFrame(() => {
-          const h = Math.max(
-            document.documentElement.scrollHeight,
-            document.body.scrollHeight
-          );
-          window.parent.postMessage(
-            { type:'quiz-embed-size', id: EMBED_ID || 'quiz1', height: Math.ceil(h) },
-            '*'
-          );
+          requestAnimationFrame(() => {
+            const h = Math.max(
+              document.documentElement.scrollHeight,
+              document.body.scrollHeight
+            );
+            window.parent.postMessage(
+              { type:'quiz-embed-size', id: EMBED_ID || 'quiz1', height: Math.ceil(h) },
+              '*'
+            );
+          });
         });
       }catch(_){}
     }
