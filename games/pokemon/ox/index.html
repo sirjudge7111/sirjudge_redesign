@@ -85,16 +85,22 @@
   const params = new URLSearchParams(location.search);
   const mode  = params.get('mode') === 'renzoku' ? 'renzoku' : 'normal';
   const label = mode === 'renzoku' ? 'れんぞくジャッジ' : 'ふつうにジャッジ';
+  const debugId = params.get('debugId'); // デバッグIDを取得
   const titleEl = document.getElementById('pageTitle');
   // if (titleEl) titleEl.textContent = `ポケモンカードゲーム | ${label}`;
 
   const dataUrl = 'https://script.google.com/macros/s/AKfycby1Nc3nBm-5PKCdZ8pNdNKRPChBbqeXwiZjcEsRZFdkUShDTtym3aJDUZsEWvsW9r8x/exec';
   const embedId = 'poke-ox';
-  const quizUrl =
+  let quizUrl =
     `/quiz.html?embed=1&embedId=${encodeURIComponent(embedId)}` +
     `&mode=${encodeURIComponent(mode)}` +
     `&title=${encodeURIComponent(label)}` +
     `&data=${encodeURIComponent(dataUrl)}`;
+  
+  // デバッグIDがあればURLに追加
+  if (debugId) {
+    quizUrl += `&debugId=${encodeURIComponent(debugId)}`;
+  }
 
   const iframe = document.getElementById('quizFrame');
   iframe.src = quizUrl;

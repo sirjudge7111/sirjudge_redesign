@@ -376,12 +376,32 @@
     let idx = 0;
     let score = { ok:0, ng:0 };
 
+    // === デバッグ機能：URLパラメータで特定の問題を表示 ===
+    const DEBUG_ID = urlp.get('debugId');
+    const DEBUG_MODE = DEBUG_ID ? true : false;
+
     fetch(ENDPOINT)
       .then(r=>r.json())
       .then(({items:list}) => {
         master = (list || []).filter(Boolean);
         if (!master.length) throw new Error('データが空です');
-        startRound();
+        
+        // デバッグモード：指定されたIDの問題を直接表示
+        if (DEBUG_MODE) {
+          const debugItem = master.find(q => q.id === DEBUG_ID);
+          if (debugItem) {
+            items = [debugItem];
+            idx = 0;
+            score = { ok:0, ng:0 };
+            document.getElementById('progress').textContent = `デバッグモード：Q1 / 1`;
+            render();
+          } else {
+            document.getElementById('qmount').innerHTML = `<div style="padding:16px;background:#fff;border-radius:12px;border:1px solid #fecaca;color:#7f1d1d"><strong>❌ デバッグ</strong><br>ID "<code style="background:#fef2f2;padding:2px 6px;border-radius:4px">${esc(DEBUG_ID)}</code>" の問題が見つかりません。<br><br>マスターデータに含まれているID:<br><code style="background:#fafafa;padding:8px;border-radius:4px;display:block;max-height:200px;overflow-y:auto;font-size:12px">${master.slice(0,20).map(q => esc(q.id)).join('\n')}</code></div>`;
+            postEmbedHeight();
+          }
+        } else {
+          startRound();
+        }
       })
       .catch(err => {
         console.error(err);
@@ -518,9 +538,16 @@
         scrollToTop();
       };
       document.getElementById('btnReset').onclick = () => {
-        startRound();
-        // ページ上部へスクロール
-        scrollToTop();
+        if (DEBUG_MODE) {
+          // デバッグモード：URLパラメータを削除して通常モードに戻す
+          const url = new URL(location.href);
+          url.searchParams.delete('debugId');
+          location.href = url.toString();
+        } else {
+          startRound();
+          // ページ上部へスクロール
+          scrollToTop();
+        }
       };
 
       // キーボード
