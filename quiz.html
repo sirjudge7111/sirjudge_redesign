@@ -43,7 +43,7 @@
     .result { text-align:center; font-weight:800; font-size:18px; padding:8px 12px; border-radius:12px; display:none; }
     .result.ok { color:#065f46; background:#ecfdf5; border:1px solid #a7f3d0; }
     .result.ng { color:#7f1d1d; background:#fef2f2; border:1px solid #fecaca; }
-    .note { font-size:14px; color:#374151; background:#fafafa; border:1px solid #eee; padding:10px; border-radius:12px; display:none; word-break:break-word; overflow-wrap:break-word; white-space:pre-wrap; min-width:0; }
+    .note { font-size:14px; color:#374151; background:#fafafa; border:1px solid #eee; padding:12px; border-radius:12px; display:none; word-break:break-word; overflow-wrap:break-word; white-space:pre-wrap; min-width:0; line-height:1.6; }
 
     .foot { display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
     .foot .btn { min-width:auto; padding:10px 14px; font-size:14px; }
@@ -696,8 +696,8 @@
           </div>
           <div class="result" aria-live="polite"></div>
           <div class="note">
-            <div><strong>正答：</strong> ${esc(q.answer || '（未設定）')}</div>
-            ${q.note ? `<div style="margin-top:6px;">${renderRuby(q.note)}</div>` : ''}
+            <div style="margin:0;"><strong>正答：</strong> ${esc(q.answer || '（未設定）')}</div>
+            ${q.note ? `<div style="margin-top:4px; margin-bottom:0;">${renderRuby(q.note)}</div>` : ''}
           </div>
         </article>`;
     }
