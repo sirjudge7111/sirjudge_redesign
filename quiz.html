@@ -12,7 +12,7 @@
   <style>
     :root { --pink:#f9c9c9; --card:#fff; --ink:#222; --muted:#6b7280; --good:#10b981; --bad:#ef4444; }
     * { box-sizing: border-box; }
-    html,body{ height:100%; width:100%; overflow-x:hidden; }
+    html,body{ height:100%; width:100%; overflow-x:hidden; margin:0; padding:0; }
     body { margin:0; color:var(--ink);  font-family: "Noto Sans JP", sans-serif;
       font-optical-sizing: auto;
       font-weight: 400;
@@ -827,20 +827,14 @@
     function postEmbedHeight(){
       if (!EMBED || window.parent === window) return;
       try{
-        // より正確な高さ計算：複数の計算方法を組み合わせ、全コンテンツを含める
+        // より正確な高さ計算：横幅を考慮しない
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            // スクロール範囲全体を高さとする（余白は加算しない）
-            const scrollHeight = document.documentElement.scrollHeight;
-            const bodyHeight = document.body.scrollHeight;
-            const offsetHeight = document.documentElement.offsetHeight;
-            
-            // 最も大きい値を採用（コンテンツをすべて含める）
-            let h = Math.max(scrollHeight, bodyHeight, offsetHeight);
-            h = Math.ceil(h);
+            // document.documentElement のスクロール範囲を基準にする
+            const h = document.documentElement.scrollHeight;
             
             window.parent.postMessage(
-              { type:'quiz-embed-size', id: EMBED_ID || 'quiz1', height: h },
+              { type:'quiz-embed-size', id: EMBED_ID || 'quiz1', height: Math.ceil(h) },
               '*'
             );
           });

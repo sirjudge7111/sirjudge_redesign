@@ -36,8 +36,9 @@
       background:transparent;
       height:100dvh;          /* 初期の仮高さ（postMessageで即更新） */
       min-height: 720px;
-      overflow:hidden;
+      overflow:hidden !important; /* スクロール不可（重要） */
       border-radius:20px;
+      pointer-events: auto;   /* iframeとの相互作用を許可 */
     }
 
     .ox-title{
@@ -117,9 +118,9 @@
   function setHeight(h){
     const minH = bootH;
     const newH = Math.max(minH, Math.ceil(h));
-    // 高さの変化が10px以上の場合のみ更新（細かい変動でのガタつきを防止）
-    // ※余白を加算しない（高さが無限に増えるのを防ぐ）
-    if (Math.abs(newH - lastSetHeight) > 10) {
+    // 高さの変化が20px以上の場合のみ更新（細かい変動でのガタつきを防止）
+    // ※iPhone/Safari対応：高さ更新の頻度を低くしてスクロール不可問題を防ぐ
+    if (Math.abs(newH - lastSetHeight) > 20) {
       lastSetHeight = newH;
       iframe.style.height = newH + 'px';
     }
@@ -156,7 +157,7 @@
         iframe.style.height = newH + 'px';
       }
       
-      // 高さ反映を待ってからスクロール実行
+      // スクロール実行
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
         // iframeの下端位置を計算してスクロール
@@ -173,7 +174,7 @@
             pendingHeight = null;
           }
         }, 600);
-      }, 50);
+      }, 100);
     }
     
     // スクロール要求（次の問題でページ上部へ）
@@ -204,7 +205,7 @@
             pendingHeight = null;
           }
         }, 600);
-      }, 50);
+      }, 100);
     }
   });
 
