@@ -26,12 +26,12 @@
     .mode-pill { display:inline-block; padding:6px 10px; border:1px solid #e5e7eb; border-radius:9999px; background:#fff; font-size:12px; text-decoration:none; color:#111; }
     .mode-pill.is-active { background:#111827; color:#fff; border-color:#111827; }
 
-    .qcard { background:var(--card); border:1px solid #e5e7eb; border-radius:16px; box-shadow:0 6px 18px rgba(0,0,0,.08); padding:16px; display:grid; gap:12px; min-width:0; }
+    .qcard { background:var(--card); border:1px solid #e5e7eb; border-radius:16px; box-shadow:0 6px 18px rgba(0,0,0,.08); padding:16px; display:grid; gap:12px; min-width:0; max-width:100%; width:100%; }
     .qmeta { font-size:12px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap; }
     .qno { font-weight:700; background:#fde68a; border-radius:999px; padding:2px 10px; color:#7c2d12; }
-    .qtext { font-size:16px; line-height:1.8; font-weight:600; word-break:break-word; overflow-wrap:anywhere; }
-    .links { display:grid; gap:6px; margin-top:4px; min-width:0; }
-    .links a { color:#2563eb; text-decoration: underline; word-break:break-word; overflow-wrap:anywhere; }
+    .qtext { font-size:16px; line-height:1.8; font-weight:600; word-break:break-word; overflow-wrap:break-word; white-space:normal; max-width:100%; width:100%; }
+    .links { display:grid; gap:6px; margin-top:4px; min-width:0; max-width:100%; width:100%; }
+    .links a { color:#2563eb; text-decoration: underline; word-break:break-word; overflow-wrap:break-word; white-space:normal; display:inline-block; max-width:100%; }
 
     .actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
     .btn { appearance:none; border:none; cursor:pointer; user-select:none; padding:14px 18px; border-radius:9999px; min-width:120px; font-weight:700; font-size:16px; color:#111; background:#fff; border:1px solid #e5e7eb; box-shadow:0 2px 0 rgba(0,0,0,.12) inset,0 2px 8px rgba(0,0,0,.08); }
@@ -43,7 +43,7 @@
     .result { text-align:center; font-weight:800; font-size:18px; padding:8px 12px; border-radius:12px; display:none; }
     .result.ok { color:#065f46; background:#ecfdf5; border:1px solid #a7f3d0; }
     .result.ng { color:#7f1d1d; background:#fef2f2; border:1px solid #fecaca; }
-    .note { font-size:14px; color:#374151; background:#fafafa; border:1px solid #eee; padding:10px; border-radius:12px; display:none; word-break:break-word; overflow-wrap:anywhere; }
+    .note { font-size:14px; color:#374151; background:#fafafa; border:1px solid #eee; padding:10px; border-radius:12px; display:none; word-break:break-word; overflow-wrap:break-word; white-space:normal; max-width:100%; width:100%; }
 
     .foot { display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
     .foot .btn { min-width:auto; padding:10px 14px; font-size:14px; }
@@ -484,7 +484,8 @@
         // iOS版Chrome検出（CriOSはiOS/iPadOS版Chromeの識別子）
         const isIOSChrome = /CriOS/.test(navigator.userAgent);
         
-        // レイアウト確定を待ってから、スクロール要求を送信（高さはスクロール要求に含める）
+        // レイアウト確定を待ってから、スクロール要求を送信
+        // 長文対応：150ms → 300ms に延長してテキストリフロー完了を待つ
         if (!isIOSChrome && EMBED && window.parent !== window) {
           setTimeout(() => {
             const currentHeight = Math.max(
@@ -493,13 +494,13 @@
               document.documentElement.offsetHeight
             );
             
-            // スクロール要求で高さも一緒に送信（高さ更新はスクロール時のみ）
+            // スクロール要求で高さも一緒に送信
             window.parent.postMessage({ 
               type: 'quiz-scroll-bottom', 
               id: EMBED_ID,
               height: Math.ceil(currentHeight)
             }, '*');
-          }, 150);
+          }, 300);
         }
       };
       const updateNextLabel = () => {
@@ -549,14 +550,19 @@
       setupLinkPreviewDesktop(root);
       setupMobilePreview(root);
 
-      // 初回高さ報告
+      // 初回高さ報告（複数回実行で長文対応）
       postEmbedHeight();
+      setTimeout(() => postEmbedHeight(), 300);
       
       // 画像読み込み完了時も高さを更新
       root.querySelectorAll('img').forEach(img => {
         if (!img.complete) {
-          img.addEventListener('load', postEmbedHeight, { once: true });
-          img.addEventListener('error', postEmbedHeight, { once: true });
+          img.addEventListener('load', () => {
+            setTimeout(() => postEmbedHeight(), 100);
+          }, { once: true });
+          img.addEventListener('error', () => {
+            setTimeout(() => postEmbedHeight(), 100);
+          }, { once: true });
         }
       });
     }
@@ -827,7 +833,7 @@
     function postEmbedHeight(){
       if (!EMBED || window.parent === window) return;
       try{
-        // より正確な高さ計算：横幅を考慮しない
+        // より正確な高さ計算：テキストリフロー完了を確実に待つ
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             // document.documentElement のスクロール範囲を基準にする
