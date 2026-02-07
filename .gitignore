@@ -4,6 +4,7 @@ Thumbs.db
 ehthumbs.db
 ehthumbs_vista.db
 *.lnk
+.vscode
 
 # macOS
 .DS_Store
