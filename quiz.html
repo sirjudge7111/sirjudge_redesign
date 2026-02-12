@@ -13,6 +13,8 @@
     :root { --pink:#f9c9c9; --card:#fff; --ink:#222; --muted:#6b7280; --good:#10b981; --bad:#ef4444; }
     * { box-sizing: border-box; }
     html,body{ height:100%; width:100%; overflow-x:hidden; margin:0; padding:0; }
+    /* iframe埋め込み時：縦スクロールも無効化（親がスクロールを担当） */
+    html.is-embed, html.is-embed body { overflow:hidden !important; -webkit-overflow-scrolling:auto; touch-action:pan-x pan-y; }
     body { margin:0; color:var(--ink);  font-family: "Noto Sans JP", sans-serif;
       font-optical-sizing: auto;
       font-weight: 400;
@@ -216,6 +218,11 @@
     // 埋め込み(iframe)対応
     const EMBED = urlp.get('embed') === '1';
     const EMBED_ID = urlp.get('embedId') || '';
+
+    // iframe埋め込み時：スクロール無効化クラスを付与
+    if (EMBED) {
+      document.documentElement.classList.add('is-embed');
+    }
 
     // === モード切り替えリンクの動的設定 ===
     (function setupModeLinks(){
