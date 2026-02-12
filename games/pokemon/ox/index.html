@@ -119,9 +119,8 @@
   function setHeight(h){
     const minH = bootH;
     const newH = Math.max(minH, Math.ceil(h));
-    // 高さの変化が20px以上の場合のみ更新（細かい変動でのガタつきを防止）
-    // ※iPhone/Safari対応：高さ更新の頻度を低くしてスクロール不可問題を防ぐ
-    if (Math.abs(newH - lastSetHeight) > 20) {
+    // 高さは常に最大値を維持（長文でも切れないようにする）
+    if (newH > lastSetHeight) {
       lastSetHeight = newH;
       iframe.style.height = newH + 'px';
     }
@@ -154,8 +153,10 @@
       if (d.height) {
         const minH = bootH;
         const newH = Math.max(minH, Math.ceil(d.height));
-        lastSetHeight = newH;
-        iframe.style.height = newH + 'px';
+        if (newH > lastSetHeight) {
+          lastSetHeight = newH;
+          iframe.style.height = newH + 'px';
+        }
       }
       
       // スクロール実行
@@ -189,8 +190,10 @@
       if (d.height) {
         const minH = bootH;
         const newH = Math.max(minH, Math.ceil(d.height));
-        lastSetHeight = newH;
-        iframe.style.height = newH + 'px';
+        if (newH > lastSetHeight) {
+          lastSetHeight = newH;
+          iframe.style.height = newH + 'px';
+        }
       }
       
       // スクロール実行

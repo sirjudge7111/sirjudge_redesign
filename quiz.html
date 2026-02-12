@@ -494,8 +494,15 @@
         // iOS版Chrome検出（CriOSはiOS/iPadOS版Chromeの識別子）
         const isIOSChrome = /CriOS/.test(navigator.userAgent);
         
-        // レイアウト確定を待ってから、スクロール要求を送信
-        // 長文対応：150ms → 300ms に延長してテキストリフロー完了を待つ
+        // レイアウト確定を待ってから高さを通知
+        // 長文対応：テキストリフロー完了を待つ
+        if (EMBED && window.parent !== window) {
+          setTimeout(() => {
+            postEmbedHeight();
+          }, 300);
+        }
+
+        // iOS版Chrome以外は、スクロール要求を送信
         if (!isIOSChrome && EMBED && window.parent !== window) {
           setTimeout(() => {
             const currentHeight = Math.max(
@@ -503,14 +510,13 @@
               document.body.scrollHeight,
               document.documentElement.offsetHeight
             );
-            
-            // スクロール要求で高さも一緒に送信
-            window.parent.postMessage({ 
-              type: 'quiz-scroll-bottom', 
+
+            window.parent.postMessage({
+              type: 'quiz-scroll-bottom',
               id: EMBED_ID,
               height: Math.ceil(currentHeight)
             }, '*');
-          }, 300);
+          }, 320);
         }
       };
       const updateNextLabel = () => {
