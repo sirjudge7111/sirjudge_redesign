@@ -14,12 +14,13 @@
     * { box-sizing: border-box; }
     html,body{ height:100%; width:100%; overflow-x:hidden; margin:0; padding:0; }
     /* iframe埋め込み時：縦スクロールも無効化（親がスクロールを担当） */
-    html.is-embed, html.is-embed body { overflow:hidden !important; -webkit-overflow-scrolling:auto; touch-action:pan-x pan-y; }
+    html.is-embed, html.is-embed body { height:auto; overflow:hidden !important; -webkit-overflow-scrolling:auto; touch-action:pan-x pan-y; }
     body { margin:0; color:var(--ink);  font-family: "Noto Sans JP", sans-serif;
       font-optical-sizing: auto;
       font-weight: 400;
       font-style: normal; }
     .stage { min-height:100%; display:grid; grid-template-rows:auto 1fr auto; max-width:560px; width:100%; margin:0 auto; padding:16px clamp(12px,3vw,20px); gap:16px; overflow:hidden; }
+    html.is-embed .stage { overflow:visible; }
 
     .hdr { text-align:center; }
     .title { font-weight:800; letter-spacing:.03em; font-size:20px; }
@@ -500,6 +501,9 @@
           setTimeout(() => {
             postEmbedHeight();
           }, 300);
+          setTimeout(() => {
+            postEmbedHeight();
+          }, 900);
         }
 
         // iOS版Chrome以外は、スクロール要求を送信
@@ -850,6 +854,16 @@
       }
     }
 
+    function getContentHeight(){
+      const stage = document.getElementById('stage');
+      const stageHeight = stage ? (stage.scrollHeight + stage.offsetTop) : 0;
+      return Math.max(
+        document.documentElement.scrollHeight,
+        document.body.scrollHeight,
+        stageHeight
+      );
+    }
+
     // === 埋め込み(iframe)時の高さ自動通知 ===
     function postEmbedHeight(){
       if (!EMBED || window.parent === window) return;
@@ -857,9 +871,7 @@
         // より正確な高さ計算：テキストリフロー完了を確実に待つ
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            // document.documentElement のスクロール範囲を基準にする
-            const h = document.documentElement.scrollHeight;
-            
+            const h = getContentHeight();
             window.parent.postMessage(
               { type:'quiz-embed-size', id: EMBED_ID || 'quiz1', height: Math.ceil(h) },
               '*'
@@ -873,10 +885,7 @@
     function scrollToTop(){
       setTimeout(() => {
         // 現在の高さを取得
-        const currentHeight = Math.max(
-          document.documentElement.scrollHeight,
-          document.body.scrollHeight
-        );
+        const currentHeight = getContentHeight();
         
         if (EMBED && window.parent !== window) {
           // 埋め込みモード：親ウィンドウにスクロール要求を送信（高さも含める）
@@ -901,10 +910,7 @@
         clearTimeout(heightDebounceTimer);
       }
       heightDebounceTimer = setTimeout(() => {
-        const h = Math.max(
-          document.documentElement.scrollHeight,
-          document.body.scrollHeight
-        );
+        const h = getContentHeight();
         // 高さの変化が10px以上の場合のみ更新（細かい変動を無視）
         if (Math.abs(h - lastReportedHeight) > 10) {
           lastReportedHeight = h;
