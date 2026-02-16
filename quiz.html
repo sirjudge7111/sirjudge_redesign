@@ -172,6 +172,59 @@
       background: #111827;
       color: #fff;
     }
+
+    /* SNS共有ボタン */
+    .share-section {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .share-label {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 10px;
+    }
+    .share-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .share-btn {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      padding: 10px 16px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+    .share-btn:active {
+      transform: scale(0.98);
+    }
+    .share-btn.x-share {
+      background: #000;
+      color: #fff;
+    }
+    .share-btn.copy-result {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #e5e7eb;
+    }
+    .share-btn.copied {
+      background: #ecfdf5;
+      color: #065f46;
+      border-color: #a7f3d0;
+    }
+    .share-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
   </style>
 </head>
 <body>
@@ -219,6 +272,15 @@
     // 埋め込み(iframe)対応
     const EMBED = urlp.get('embed') === '1';
     const EMBED_ID = urlp.get('embedId') || '';
+
+    // 共有設定（URLパラメータでカスタマイズ可能）
+    const SHARE_CONFIG = {
+      title: urlp.get('shareTitle') || '問題クイズ',
+      hashtag: urlp.get('shareHashtag') || '',
+      normalModeTag: urlp.get('normalModeTag') || 'ふつうモード',
+      renzokuModeTag: urlp.get('renzokuModeTag') || 'れんぞくモード',
+      url: urlp.get('shareUrl') || ''
+    };
 
     // iframe埋め込み時：スクロール無効化クラスを付与
     if (EMBED) {
@@ -606,6 +668,30 @@
 
       const root = document.getElementById('qmount');
       
+      // 共有用テキストを生成（URLパラメータでカスタマイズ可能）
+      const modeTag = isRenzoku ? SHARE_CONFIG.renzokuModeTag : SHARE_CONFIG.normalModeTag;
+      const hashtags = [SHARE_CONFIG.hashtag, modeTag].filter(Boolean).map(t => `#${t}`).join(' ');
+      const shareUrl = SHARE_CONFIG.url ? '\n' + SHARE_CONFIG.url : '';
+      const shareText = isRenzoku
+        ? `【${SHARE_CONFIG.title}】${score.ok}問連続正解${score.ok === total ? 'でパーフェクト' : ''}達成！${hashtags ? '\n' + hashtags : ''}${shareUrl}`
+        : `【${SHARE_CONFIG.title}】${answered}問中${score.ok}問正解！（正答率${acc}%）${acc === 100 ? ' パーフェクト！' : ''}${hashtags ? '\n' + hashtags : ''}${shareUrl}`; 
+      
+      // 共有ボタンHTML
+      const shareHtml = `
+        <div class="share-section">
+          <div class="share-label">結果をシェア</div>
+          <div class="share-buttons">
+            <button class="share-btn x-share" id="shareX" type="button">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              Xで共有
+            </button>
+            <button class="share-btn copy-result" id="copyResult" type="button">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+              コピー
+            </button>
+          </div>
+        </div>`;
+
       if (isRenzoku) {
         // れんぞくモード用の結果画面
         root.innerHTML = `
@@ -626,6 +712,7 @@
               <button class="btn secondary" id="againSame">もう一度チャレンジ</button>
               <button class="btn" id="switchModeBtn" data-mode="normal">ふつうにジャッジへ</button>
             </div>
+            ${shareHtml}
           </article>
         `;
       } else {
@@ -645,6 +732,7 @@
               <button class="btn secondary" id="againSame">同じモードでもう一度</button>
               <button class="btn" id="switchModeBtn" data-mode="renzoku">れんぞくジャッジへ</button>
             </div>
+            ${shareHtml}
           </article>
         `;
       }
@@ -668,6 +756,41 @@
 
       document.getElementById('againSame').onclick = () => startRound();
       
+      // SNS共有ボタンの処理
+      document.getElementById('shareX').onclick = () => {
+        const url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText);
+        window.open(url, '_blank', 'width=550,height=420');
+      };
+      
+      document.getElementById('copyResult').onclick = async () => {
+        const btn = document.getElementById('copyResult');
+        try {
+          await navigator.clipboard.writeText(shareText);
+          btn.classList.add('copied');
+          btn.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> コピー完了`;
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> コピー`;
+          }, 2000);
+        } catch (e) {
+          // フォールバック
+          const textarea = document.createElement('textarea');
+          textarea.value = shareText;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+          btn.classList.add('copied');
+          btn.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> コピー完了`;
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> コピー`;
+          }, 2000);
+        }
+      };
+
       // モード切り替えボタンの処理（埋め込みモード対応）
       document.getElementById('switchModeBtn').onclick = () => {
         const targetMode = document.getElementById('switchModeBtn').dataset.mode;

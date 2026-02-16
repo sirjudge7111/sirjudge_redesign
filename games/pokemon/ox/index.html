@@ -5,6 +5,19 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ポケモンカードゲーム | OX</title>
+  
+  <!-- OGP / Twitter Card -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="ポケカ問題クイズ | さぁジャッジ" />
+  <meta property="og:description" content="ポケモンカードゲームのルールをクイズで学べる！あなたは何問正解できる？" />
+  <meta property="og:image" content="https://sirjudge.com/assets/ogp.png" />
+  <meta property="og:url" content="https://sirjudge.com/games/pokemon/ox/" />
+  <meta property="og:site_name" content="さぁジャッジ" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="ポケカ問題クイズ | さぁジャッジ" />
+  <meta name="twitter:description" content="ポケモンカードゲームのルールをクイズで学べる！あなたは何問正解できる？" />
+  <meta name="twitter:image" content="https://sirjudge.com/assets/ogp.png" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&display=swap" rel="stylesheet">
@@ -93,11 +106,19 @@
 
   const dataUrl = 'https://script.google.com/macros/s/AKfycby1Nc3nBm-5PKCdZ8pNdNKRPChBbqeXwiZjcEsRZFdkUShDTtym3aJDUZsEWvsW9r8x/exec';
   const embedId = 'poke-ox';
+  const shareUrl = mode === 'renzoku' 
+    ? 'https://sirjudge.com/games/pokemon/ox/?mode=renzoku'
+    : 'https://sirjudge.com/games/pokemon/ox/';
   let quizUrl =
     `/quiz.html?embed=1&embedId=${encodeURIComponent(embedId)}` +
     `&mode=${encodeURIComponent(mode)}` +
     `&title=${encodeURIComponent(label)}` +
-    `&data=${encodeURIComponent(dataUrl)}`;
+    `&data=${encodeURIComponent(dataUrl)}` +
+    `&shareTitle=${encodeURIComponent('ポケカ問題クイズ')}` +
+    `&shareHashtag=${encodeURIComponent('さぁジャッジ')}` +
+    `&normalModeTag=${encodeURIComponent('ふつうにジャッジ')}` +
+    `&renzokuModeTag=${encodeURIComponent('れんぞくジャッジ')}` +
+    `&shareUrl=${encodeURIComponent(shareUrl)}`;
   
   // デバッグIDがあればURLに追加
   if (debugId) {
